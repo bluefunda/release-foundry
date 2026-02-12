@@ -1,0 +1,24 @@
+# Binary (root only, not cmd/release-foundry/)
+/release-foundry
+
+# Output
+weekly_engineering_summary.json
+*.json
+
+# Go
+vendor/
+
+# Environment
+.env
+.env.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
