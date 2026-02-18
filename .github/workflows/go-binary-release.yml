@@ -1,0 +1,87 @@
+name: Go Binary Release
+
+on:
+  workflow_call:
+    inputs:
+      release-type:
+        description: 'Release-please release type'
+        required: false
+        type: string
+        default: 'go'
+      goreleaser-version:
+        description: 'GoReleaser version'
+        required: false
+        type: string
+        default: '~> v2'
+      goreleaser-args:
+        description: 'GoReleaser arguments'
+        required: false
+        type: string
+        default: 'release --clean'
+      test-command:
+        description: 'Test command to run before release'
+        required: false
+        type: string
+        default: 'go test -race -count=1 ./...'
+    secrets:
+      GH_PAT:
+        required: true
+      HOMEBREW_TAP_TOKEN:
+        required: false
+    outputs:
+      release_created:
+        description: 'Whether a release was created'
+        value: ${{ jobs.release-please.outputs.release_created }}
+      tag_name:
+        description: 'The tag name of the release'
+        value: ${{ jobs.release-please.outputs.tag_name }}
+
+env:
+  GOPRIVATE: github.com/bluefunda/*
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          release-type: ${{ inputs.release-type }}
+
+  goreleaser:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Configure Git for private modules
+        run: git config --global url."https://${{ secrets.GH_PAT }}@github.com/".insteadOf "https://github.com/"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run tests
+        run: ${{ inputs.test-command }}
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: ${{ inputs.goreleaser-version }}
+          args: ${{ inputs.goreleaser-args }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
