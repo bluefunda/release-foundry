@@ -1,0 +1,21 @@
+defaults:
+  owner: bluefunda
+  baseBranch: main
+
+repos:
+  - repo: xpro
+    edition: enterprise
+
+  - repo: xpro-free
+    edition: free
+
+  # Example with custom label overrides:
+  # - repo: xpro-plugins
+  #   edition: enterprise
+  #   includeLabels:
+  #     - feature
+  #     - fix
+  #     - plugin
+  #   excludeLabels:
+  #     - internal
+  #     - wip

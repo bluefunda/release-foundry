@@ -34,9 +34,17 @@ type SummaryStats struct {
 type WeeklySummary struct {
 	GeneratedAt    string        `json:"generated_at"`
 	Repository     string        `json:"repository"`
+	Edition        string        `json:"edition,omitempty"`
 	TimeWindowDays int           `json:"time_window_days"`
 	SummaryStats   SummaryStats  `json:"summary_stats"`
 	PullRequests   []PullRequest `json:"pull_requests"`
+}
+
+// BatchSummary is the combined output when processing multiple repos.
+type BatchSummary struct {
+	GeneratedAt    string          `json:"generated_at"`
+	TimeWindowDays int             `json:"time_window_days"`
+	Repositories   []WeeklySummary `json:"repositories"`
 }
 
 // IncludeLabels are the PR labels we want to collect.
@@ -133,4 +141,6 @@ type Config struct {
 	BaseBranch string
 	WindowDays int
 	Since      time.Time
+	Edition    string
+	Filters    FilterConfig
 }

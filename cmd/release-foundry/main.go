@@ -13,6 +13,7 @@ import (
 
 	"golang.org/x/term"
 
+	"github.com/release-foundry/internal/config"
 	"github.com/release-foundry/internal/domain"
 	gh "github.com/release-foundry/internal/github"
 	"github.com/release-foundry/internal/service"
@@ -26,8 +27,16 @@ func main() {
 	repo := flag.String("repo", "", "GitHub repository name (overrides GITHUB_REPO)")
 	days := flag.Int("days", 7, "number of days to look back")
 	output := flag.String("output", "weekly_engineering_summary.json", "output file path")
+	configPath := flag.String("config", "", "path to multi-repo YAML config for batch mode")
 	flag.Parse()
 
+	// Batch mode: process multiple repos from config file.
+	if *configPath != "" {
+		runBatch(*configPath, *token, *days, *output)
+		return
+	}
+
+	// Single-repo mode (backward compatible).
 	cfg, err := loadConfig(*token, *owner, *repo, *days)
 	if err != nil {
 		log.Fatalf("configuration error: %v", err)
@@ -46,6 +55,70 @@ func main() {
 	}
 
 	log.Printf("wrote %s (%d PRs)", *output, summary.SummaryStats.TotalPRs)
+}
+
+func runBatch(configPath, flagToken string, days int, output string) {
+	repoCfg, err := config.LoadReposConfig(configPath)
+	if err != nil {
+		log.Fatalf("config error: %v", err)
+	}
+
+	// Resolve token once for all repos.
+	token, err := resolveToken(flagToken)
+	if err != nil {
+		log.Fatalf("token error: %v", err)
+	}
+
+	client := gh.NewClient(token)
+	since := time.Now().UTC().AddDate(0, 0, -days)
+
+	batch := domain.BatchSummary{
+		GeneratedAt:    time.Now().UTC().Format(time.RFC3339),
+		TimeWindowDays: days,
+	}
+
+	for _, entry := range repoCfg.Repos {
+		log.Printf("processing %s/%s (edition=%s)", entry.Owner, entry.Repo, entry.Edition)
+
+		var filters domain.FilterConfig
+		if len(entry.IncludeLabels) > 0 || len(entry.ExcludeLabels) > 0 {
+			filters = domain.NewFilterConfig(entry.IncludeLabels, entry.ExcludeLabels)
+		}
+
+		cfg := domain.Config{
+			Token:      token,
+			Owner:      entry.Owner,
+			Repo:       entry.Repo,
+			BaseBranch: entry.BaseBranch,
+			WindowDays: days,
+			Since:      since,
+			Edition:    entry.Edition,
+			Filters:    filters,
+		}
+
+		collector := service.NewCollector(client, cfg)
+		summary, err := collector.Collect()
+		if err != nil {
+			log.Printf("error collecting %s/%s: %v (skipping)", entry.Owner, entry.Repo, err)
+			continue
+		}
+
+		batch.Repositories = append(batch.Repositories, *summary)
+	}
+
+	if batch.Repositories == nil {
+		batch.Repositories = []domain.WeeklySummary{}
+	}
+
+	if err := writeJSON(output, batch); err != nil {
+		log.Fatalf("write output: %v", err)
+	}
+
+	total := 0
+	for _, r := range batch.Repositories {
+		total += r.SummaryStats.TotalPRs
+	}
+	log.Printf("wrote %s (%d repos, %d total PRs)", output, len(batch.Repositories), total)
 }
 
 // resolve returns the first non-empty value from: flag, env var, interactive prompt.

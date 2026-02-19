@@ -27,6 +27,12 @@ func (c *Collector) Collect() (*domain.WeeklySummary, error) {
 	log.Printf("fetching merged PRs for %s/%s (base=%s, since=%s)",
 		c.cfg.Owner, c.cfg.Repo, c.cfg.BaseBranch, c.cfg.Since.Format(time.RFC3339))
 
+	// Resolve filter config: use per-repo overrides if set, otherwise defaults.
+	fc := c.cfg.Filters
+	if fc.IsZero() {
+		fc = domain.DefaultFilterConfig()
+	}
+
 	items, err := c.client.ListMergedPRs(c.cfg.Owner, c.cfg.Repo)
 	if err != nil {
 		return nil, fmt.Errorf("list merged PRs: %w", err)
@@ -61,18 +67,18 @@ func (c *Collector) Collect() (*domain.WeeklySummary, error) {
 		labels := extractLabelNames(item.Labels)
 
 		// Exclude: by label first, then by title prefix.
-		if hasAnyLabel(labels, domain.ExcludeLabels) {
+		if hasAnyLabel(labels, fc.ExcludeLabels) {
 			log.Printf("skip PR #%d %q: has excluded label", item.Number, item.Title)
 			continue
 		}
-		if len(labels) == 0 && domain.IsExcludedByTitle(item.Title) {
+		if len(labels) == 0 && domain.IsExcludedByTitleWith(item.Title, fc.TitleExcludePrefixes) {
 			log.Printf("skip PR #%d %q: excluded by title prefix", item.Number, item.Title)
 			continue
 		}
 
 		// Include: by label, or by title prefix when no labels exist.
-		hasIncludeLabel := hasAnyLabel(labels, domain.IncludeLabels)
-		_, titleMatched := domain.InferTypeFromTitle(item.Title)
+		hasIncludeLabel := hasAnyLabel(labels, fc.IncludeLabels)
+		_, titleMatched := domain.InferTypeFromTitleWith(item.Title, fc.TitlePrefixMap)
 		if !hasIncludeLabel && !(len(labels) == 0 && titleMatched) {
 			log.Printf("skip PR #%d %q: no include label or recognized title prefix", item.Number, item.Title)
 			continue
@@ -85,7 +91,7 @@ func (c *Collector) Collect() (*domain.WeeklySummary, error) {
 			detail = &gh.PRDetail{}
 		}
 
-		prType := domain.ClassifyPR(labels, item.Title)
+		prType := domain.ClassifyPRWith(labels, item.Title, fc)
 
 		body := normalizeBody(item.Body)
 
@@ -124,6 +130,7 @@ func (c *Collector) Collect() (*domain.WeeklySummary, error) {
 	summary := &domain.WeeklySummary{
 		GeneratedAt:    time.Now().UTC().Format(time.RFC3339),
 		Repository:     fmt.Sprintf("%s/%s", c.cfg.Owner, c.cfg.Repo),
+		Edition:        c.cfg.Edition,
 		TimeWindowDays: c.cfg.WindowDays,
 		SummaryStats:   stats,
 		PullRequests:   prs,
