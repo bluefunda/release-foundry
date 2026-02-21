@@ -8,6 +8,10 @@ on:
         required: false
         type: string
         default: 'go'
+    secrets:
+      GH_PAT:
+        description: 'GitHub PAT to trigger downstream workflows from release-please commits'
+        required: false
     outputs:
       release_created:
         description: 'Whether a release was created'
@@ -30,3 +34,4 @@ jobs:
         id: release
         with:
           release-type: ${{ inputs.release-type }}
+          token: ${{ secrets.GH_PAT || github.token }}
