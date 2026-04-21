@@ -1,6 +1,22 @@
 name: Docker Deploy
 
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Version tag for the Docker image'
+        required: true
+        type: string
+      image-name:
+        description: 'Docker image name (defaults to repo name)'
+        required: false
+        type: string
+        default: ''
+      build-args:
+        description: 'Additional Docker build arguments (one per line)'
+        required: false
+        type: string
+        default: ''
   workflow_call:
     inputs:
       tag:
