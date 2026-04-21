@@ -47,8 +47,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Configure Git for private modules
-        if: ${{ secrets.GH_PAT != '' }}
-        run: git config --global url."https://${{ secrets.GH_PAT }}@github.com/".insteadOf "https://github.com/"
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -n "$GH_PAT" ]; then
+            git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
+          fi
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -91,8 +95,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Configure Git for private modules
-        if: ${{ secrets.GH_PAT != '' }}
-        run: git config --global url."https://${{ secrets.GH_PAT }}@github.com/".insteadOf "https://github.com/"
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -n "$GH_PAT" ]; then
+            git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
+          fi
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -126,8 +134,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Configure Git for private modules
-        if: ${{ secrets.GH_PAT != '' }}
-        run: git config --global url."https://${{ secrets.GH_PAT }}@github.com/".insteadOf "https://github.com/"
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -n "$GH_PAT" ]; then
+            git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
+          fi
 
       - name: Checkout code
         uses: actions/checkout@v4
