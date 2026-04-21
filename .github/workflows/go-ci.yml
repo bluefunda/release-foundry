@@ -35,7 +35,8 @@ on:
         default: false
     secrets:
       GH_PAT:
-        required: true
+        description: 'Personal access token for private Go module access. Only needed when GOPRIVATE imports are used.'
+        required: false
 
 env:
   GOPRIVATE: github.com/bluefunda/*
@@ -46,6 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Configure Git for private modules
+        if: ${{ secrets.GH_PAT != '' }}
         run: git config --global url."https://${{ secrets.GH_PAT }}@github.com/".insteadOf "https://github.com/"
 
       - name: Checkout code
@@ -89,6 +91,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Configure Git for private modules
+        if: ${{ secrets.GH_PAT != '' }}
         run: git config --global url."https://${{ secrets.GH_PAT }}@github.com/".insteadOf "https://github.com/"
 
       - name: Checkout code
@@ -123,6 +126,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Configure Git for private modules
+        if: ${{ secrets.GH_PAT != '' }}
         run: git config --global url."https://${{ secrets.GH_PAT }}@github.com/".insteadOf "https://github.com/"
 
       - name: Checkout code
