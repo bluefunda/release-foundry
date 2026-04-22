@@ -12,7 +12,7 @@ on:
         description: 'golangci-lint version'
         required: false
         type: string
-        default: 'v2.9.0'
+        default: 'v2.11.4'
       run-protobuf:
         description: 'Generate protobuf files before build/test/lint'
         required: false
