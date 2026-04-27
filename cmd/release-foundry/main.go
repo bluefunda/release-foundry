@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/release-foundry/internal/config"
 	"github.com/release-foundry/internal/domain"
 	gh "github.com/release-foundry/internal/github"
+	"github.com/release-foundry/internal/renderers"
 	"github.com/release-foundry/internal/service"
 )
 
@@ -28,11 +30,15 @@ func main() {
 	days := flag.Int("days", 7, "number of days to look back")
 	output := flag.String("output", "weekly_engineering_summary.json", "output file path")
 	configPath := flag.String("config", "", "path to multi-repo YAML config for batch mode")
+	renderFlag := flag.String("render", "", "comma-separated renderers to run (e.g. github-release)")
+	outDir := flag.String("out", ".", "output directory for rendered artifacts")
 	flag.Parse()
+
+	renderNames := parseRenderFlag(*renderFlag)
 
 	// Batch mode: process multiple repos from config file.
 	if *configPath != "" {
-		runBatch(*configPath, *token, *days, *output)
+		runBatch(*configPath, *token, *days, *output, renderNames, *outDir)
 		return
 	}
 
@@ -53,11 +59,14 @@ func main() {
 	if err := writeJSON(*output, summary); err != nil {
 		log.Fatalf("write output: %v", err)
 	}
-
 	log.Printf("wrote %s (%d PRs)", *output, summary.SummaryStats.TotalPRs)
+
+	if err := runRenderers(renderNames, *outDir, summary, nil); err != nil {
+		log.Fatalf("render: %v", err)
+	}
 }
 
-func runBatch(configPath, flagToken string, days int, output string) {
+func runBatch(configPath, flagToken string, days int, output string, renderNames []string, outDir string) {
 	repoCfg, err := config.LoadReposConfig(configPath)
 	if err != nil {
 		log.Fatalf("config error: %v", err)
@@ -119,6 +128,10 @@ func runBatch(configPath, flagToken string, days int, output string) {
 		total += r.SummaryStats.TotalPRs
 	}
 	log.Printf("wrote %s (%d repos, %d total PRs)", output, len(batch.Repositories), total)
+
+	if err := runRenderers(renderNames, outDir, nil, &batch); err != nil {
+		log.Fatalf("render: %v", err)
+	}
 }
 
 // resolve returns the first non-empty value from: flag, env var, interactive prompt.
@@ -209,6 +222,54 @@ func loadConfig(flagToken, flagOwner, flagRepo string, days int) (domain.Config,
 		WindowDays: days,
 		Since:      since,
 	}, nil
+}
+
+func parseRenderFlag(s string) []string {
+	if s == "" {
+		return nil
+	}
+	var out []string
+	for _, r := range strings.Split(s, ",") {
+		if r = strings.TrimSpace(r); r != "" {
+			out = append(out, r)
+		}
+	}
+	return out
+}
+
+// runRenderers runs each named renderer and writes output files to outDir.
+// Exactly one of summary/batch must be non-nil.
+func runRenderers(names []string, outDir string, summary *domain.WeeklySummary, batch *domain.BatchSummary) error {
+	if len(names) == 0 {
+		return nil
+	}
+	if err := os.MkdirAll(outDir, 0o755); err != nil {
+		return fmt.Errorf("create output dir: %w", err)
+	}
+	for _, name := range names {
+		switch name {
+		case "github-release":
+			if batch != nil {
+				content := renderers.GithubReleaseBatch(*batch)
+				dest := filepath.Join(outDir, "github-release.md")
+				if err := os.WriteFile(dest, []byte(content), 0o644); err != nil {
+					return fmt.Errorf("write %s: %w", dest, err)
+				}
+				log.Printf("wrote %s", dest)
+			} else if summary != nil {
+				repoSlug := strings.ReplaceAll(summary.Repository, "/", "-")
+				dest := filepath.Join(outDir, repoSlug+"-github-release.md")
+				content := renderers.GithubRelease(*summary)
+				if err := os.WriteFile(dest, []byte(content), 0o644); err != nil {
+					return fmt.Errorf("write %s: %w", dest, err)
+				}
+				log.Printf("wrote %s", dest)
+			}
+		default:
+			log.Printf("unknown renderer %q — skipping", name)
+		}
+	}
+	return nil
 }
 
 func writeJSON(path string, v any) error {
