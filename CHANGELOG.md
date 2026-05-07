@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/bluefunda/release-foundry/compare/v1.0.0...v1.1.0) (2026-05-07)
+
+
+### Features
+
+* **go-ci:** add goprivate input, remove hardcoded GOPRIVATE env ([#11](https://github.com/bluefunda/release-foundry/issues/11)) ([a7761ff](https://github.com/bluefunda/release-foundry/commit/a7761ff9badbd78b09af8e45f7ed1a3ad157f485))
+
+
+### Bug Fixes
+
+* revert Configure Git step to shell if-block ([#13](https://github.com/bluefunda/release-foundry/issues/13)) ([781f230](https://github.com/bluefunda/release-foundry/commit/781f230694054fc6bf94085d45db6f93a11c9dc6))
+
 ## 1.0.0 (2026-04-27)
 
 
