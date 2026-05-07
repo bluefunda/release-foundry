@@ -22,38 +22,41 @@ on:
         required: false
         type: string
         default: 'go test -race -count=1 ./...'
+      goprivate:
+        description: >
+          GOPRIVATE value for private module access.
+          Set to 'github.com/bluefunda/*' for repos with private bluefunda deps.
+          Leave empty for public/OSS repos that have no private dependencies.
+        required: false
+        type: string
+        default: 'github.com/bluefunda/*'
     secrets:
       GH_PAT:
-        description: 'Personal access token for private Go module access. Only needed when GOPRIVATE imports are used.'
+        description: 'GitHub PAT for private module access via git. Only needed when goprivate is set and modules require authentication.'
         required: false
       HOMEBREW_TAP_TOKEN:
         required: false
-
-env:
-  GOPRIVATE: github.com/bluefunda/*
 
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      GOPRIVATE: ${{ inputs.goprivate }}
     steps:
       - name: Configure Git for private modules
+        if: ${{ secrets.GH_PAT != '' }}
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
-        run: |
-          if [ -n "$GH_PAT" ]; then
-            git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
-          fi
+        run: git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
 
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ inputs.tag }}
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
 
