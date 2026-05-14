@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/bluefunda/release-foundry/compare/v1.1.0...v1.2.0) (2026-05-14)
+
+
+### Features
+
+* add github-release-notes reusable workflow and -since flag ([2d7dfc2](https://github.com/bluefunda/release-foundry/commit/2d7dfc27fe2ad9b86cdbabc4025a3cac830c1fa2))
+
 ## [1.1.0](https://github.com/bluefunda/release-foundry/compare/v1.0.0...v1.1.0) (2026-05-13)
 
 
