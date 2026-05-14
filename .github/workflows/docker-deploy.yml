@@ -17,6 +17,11 @@ on:
         required: false
         type: string
         default: ''
+      komodo-stack:
+        description: 'Komodo stack name to deploy after push (leave empty to skip)'
+        required: false
+        type: string
+        default: ''
   workflow_call:
     inputs:
       tag:
@@ -33,9 +38,18 @@ on:
         required: false
         type: string
         default: ''
+      komodo-stack:
+        description: 'Komodo stack name to deploy after push (leave empty to skip)'
+        required: false
+        type: string
+        default: ''
     secrets:
       GH_PAT:
         required: true
+      KOMODO_API_KEY:
+        required: false
+      KOMODO_API_SECRET:
+        required: false
 
 jobs:
   build-and-push:
@@ -82,3 +96,12 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/${{ steps.image.outputs.name }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Deploy to Komodo
+        if: ${{ inputs.komodo-stack != '' }}
+        run: |
+          curl -sf -X POST https://komodo.bluefunda.com/execute \
+            -H "Content-Type: application/json" \
+            -H "X-API-KEY: ${{ secrets.KOMODO_API_KEY }}" \
+            -H "X-API-SECRET: ${{ secrets.KOMODO_API_SECRET }}" \
+            -d '{"type":"DeployStack","params":{"stack":"${{ inputs.komodo-stack }}"}}'
