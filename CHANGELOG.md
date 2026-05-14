@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/bluefunda/release-foundry/compare/v1.2.0...v1.3.0) (2026-05-14)
+
+
+### Features
+
+* add komodo deploy step after image push ([#16](https://github.com/bluefunda/release-foundry/issues/16)) ([471e721](https://github.com/bluefunda/release-foundry/commit/471e721fd99e576309c3dd178481a42ddc7e44b2))
+
 ## [1.2.0](https://github.com/bluefunda/release-foundry/compare/v1.1.0...v1.2.0) (2026-05-14)
 
 
