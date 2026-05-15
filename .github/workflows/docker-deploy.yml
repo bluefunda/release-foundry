@@ -100,8 +100,12 @@ jobs:
       - name: Deploy to Komodo
         if: ${{ inputs.komodo-stack != '' }}
         run: |
-          curl -sf -X POST https://komodo.bluefunda.com/execute \
+          response=$(curl -s -w "\n%{http_code}" -X POST https://komodo.bluefunda.com/execute \
             -H "Content-Type: application/json" \
             -H "X-API-KEY: ${{ secrets.KOMODO_API_KEY }}" \
             -H "X-API-SECRET: ${{ secrets.KOMODO_API_SECRET }}" \
-            -d '{"type":"DeployStack","params":{"stack":"${{ inputs.komodo-stack }}"}}'
+            -d '{"type":"DeployStack","params":{"stack":"${{ inputs.komodo-stack }}"}}')
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | head -1)
+          echo "HTTP $http_code: $body"
+          [[ "$http_code" -ge 200 && "$http_code" -lt 300 ]]
