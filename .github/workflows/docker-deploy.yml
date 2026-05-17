@@ -100,7 +100,7 @@ jobs:
       - name: Deploy to Komodo
         if: ${{ inputs.komodo-stack != '' }}
         run: |
-          response=$(curl -s -w "\n%{http_code}" -X POST https://komodo.bluefunda.com/execute \
+          response=$(curl -s -w "\n%{http_code}" -X POST https://gitops.bluefunda.com/execute \
             -H "Content-Type: application/json" \
             -H "X-API-KEY: ${{ secrets.KOMODO_API_KEY }}" \
             -H "X-API-SECRET: ${{ secrets.KOMODO_API_SECRET }}" \
