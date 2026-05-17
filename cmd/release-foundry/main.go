@@ -28,6 +28,7 @@ func main() {
 	owner := flag.String("owner", "", "GitHub repository owner (overrides GITHUB_OWNER)")
 	repo := flag.String("repo", "", "GitHub repository name (overrides GITHUB_REPO)")
 	days := flag.Int("days", 7, "number of days to look back")
+	sinceStr := flag.String("since", "", "fetch PRs merged after this RFC3339 timestamp (overrides -days)")
 	output := flag.String("output", "weekly_engineering_summary.json", "output file path")
 	configPath := flag.String("config", "", "path to multi-repo YAML config for batch mode")
 	renderFlag := flag.String("render", "", "comma-separated renderers to run (e.g. github-release)")
@@ -38,12 +39,12 @@ func main() {
 
 	// Batch mode: process multiple repos from config file.
 	if *configPath != "" {
-		runBatch(*configPath, *token, *days, *output, renderNames, *outDir)
+		runBatch(*configPath, *token, *days, *sinceStr, *output, renderNames, *outDir)
 		return
 	}
 
 	// Single-repo mode (backward compatible).
-	cfg, err := loadConfig(*token, *owner, *repo, *days)
+	cfg, err := loadConfig(*token, *owner, *repo, *days, *sinceStr)
 	if err != nil {
 		log.Fatalf("configuration error: %v", err)
 	}
@@ -66,7 +67,7 @@ func main() {
 	}
 }
 
-func runBatch(configPath, flagToken string, days int, output string, renderNames []string, outDir string) {
+func runBatch(configPath, flagToken string, days int, sinceStr string, output string, renderNames []string, outDir string) {
 	repoCfg, err := config.LoadReposConfig(configPath)
 	if err != nil {
 		log.Fatalf("config error: %v", err)
@@ -79,7 +80,10 @@ func runBatch(configPath, flagToken string, days int, output string, renderNames
 	}
 
 	client := gh.NewClient(token)
-	since := time.Now().UTC().AddDate(0, 0, -days)
+	since, err := parseSince(sinceStr, days)
+	if err != nil {
+		log.Fatalf("invalid -since: %v", err)
+	}
 
 	batch := domain.BatchSummary{
 		GeneratedAt:    time.Now().UTC().Format(time.RFC3339),
@@ -197,7 +201,14 @@ func ghAuthToken() string {
 	return strings.TrimSpace(string(out))
 }
 
-func loadConfig(flagToken, flagOwner, flagRepo string, days int) (domain.Config, error) {
+func parseSince(sinceStr string, days int) (time.Time, error) {
+	if sinceStr != "" {
+		return time.Parse(time.RFC3339, sinceStr)
+	}
+	return time.Now().UTC().AddDate(0, 0, -days), nil
+}
+
+func loadConfig(flagToken, flagOwner, flagRepo string, days int, sinceStr string) (domain.Config, error) {
 	// Token resolution: flag → env → gh CLI → interactive prompt.
 	token, err := resolveToken(flagToken)
 	if err != nil {
@@ -212,7 +223,10 @@ func loadConfig(flagToken, flagOwner, flagRepo string, days int) (domain.Config,
 		return domain.Config{}, err
 	}
 
-	since := time.Now().UTC().AddDate(0, 0, -days)
+	since, err := parseSince(sinceStr, days)
+	if err != nil {
+		return domain.Config{}, fmt.Errorf("invalid -since value: %w", err)
+	}
 
 	return domain.Config{
 		Token:      token,

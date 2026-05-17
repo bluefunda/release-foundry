@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.3.0](https://github.com/bluefunda/release-foundry/compare/v1.2.0...v1.3.0) (2026-05-14)
+
+
+### Features
+
+* add komodo deploy step after image push ([#16](https://github.com/bluefunda/release-foundry/issues/16)) ([471e721](https://github.com/bluefunda/release-foundry/commit/471e721fd99e576309c3dd178481a42ddc7e44b2))
+
+## [1.2.0](https://github.com/bluefunda/release-foundry/compare/v1.1.0...v1.2.0) (2026-05-14)
+
+
+### Features
+
+* add github-release-notes reusable workflow and -since flag ([2d7dfc2](https://github.com/bluefunda/release-foundry/commit/2d7dfc27fe2ad9b86cdbabc4025a3cac830c1fa2))
+
+## [1.1.0](https://github.com/bluefunda/release-foundry/compare/v1.0.0...v1.1.0) (2026-05-13)
+
+
+### Features
+
+* add macOS notarization support to go-binary-release workflow ([#14](https://github.com/bluefunda/release-foundry/issues/14)) ([c888bd1](https://github.com/bluefunda/release-foundry/commit/c888bd16d6c80ae50effe725aaa1e036b2217bc9))
+* **go-ci:** add goprivate input, remove hardcoded GOPRIVATE env ([#11](https://github.com/bluefunda/release-foundry/issues/11)) ([a7761ff](https://github.com/bluefunda/release-foundry/commit/a7761ff9badbd78b09af8e45f7ed1a3ad157f485))
+
+
+### Bug Fixes
+
+* revert Configure Git step to shell if-block ([#13](https://github.com/bluefunda/release-foundry/issues/13)) ([781f230](https://github.com/bluefunda/release-foundry/commit/781f230694054fc6bf94085d45db6f93a11c9dc6))
+
 ## 1.0.0 (2026-04-27)
 
 
