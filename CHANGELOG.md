@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.3.1](https://github.com/bluefunda/release-foundry/compare/v1.3.0...v1.3.1) (2026-05-21)
+
+
+### Bug Fixes
+
+* correct Komodo deploy URL to gitops.bluefunda.com ([2d678f6](https://github.com/bluefunda/release-foundry/commit/2d678f6f410ee1e4288721da12c5cc40ba072e36))
+* replace Komodo direct API call with GitOps-based deploy ([#20](https://github.com/bluefunda/release-foundry/issues/20)) ([9304cb8](https://github.com/bluefunda/release-foundry/commit/9304cb8414e639f5f2820d3a67f5daec5a641a28))
+* show Komodo API response in deploy step for debugging ([829614a](https://github.com/bluefunda/release-foundry/commit/829614a4824e16e757fffd1199b13d0f416bf8a2))
+
 ## [1.3.0](https://github.com/bluefunda/release-foundry/compare/v1.2.0...v1.3.0) (2026-05-14)
 
 
