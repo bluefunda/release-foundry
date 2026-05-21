@@ -19,72 +19,9 @@ on:
 
 jobs:
   release-notes:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout release-foundry
-        uses: actions/checkout@v4
-        with:
-          repository: bluefunda/release-foundry
-          ref: main
-          path: _rf
-          token: ${{ secrets.GH_PAT || github.token }}
-
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: _rf/go.mod
-          cache-dependency-path: _rf/go.sum
-
-      - name: Build
-        run: go build -o /tmp/rf ./cmd/release-foundry
-        working-directory: _rf
-
-      - name: Get previous release date
-        id: prev
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
-        run: |
-          SINCE=$(gh release list \
-            --repo "${{ github.repository }}" \
-            --limit 20 --json tagName,publishedAt --order desc \
-            | jq -r --arg tag "${{ inputs.tag }}" \
-              '[.[] | select(.tagName != $tag)] | .[0].publishedAt // empty')
-          echo "since=${SINCE}" >> "$GITHUB_OUTPUT"
-
-      - name: Generate release notes
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT || github.token }}
-        run: |
-          REPO="${{ github.repository }}"
-          OWNER="${REPO%%/*}"
-          REPO_NAME="${REPO##*/}"
-          mkdir -p /tmp/rf-out
-          SINCE="${{ steps.prev.outputs.since }}"
-          if [ -n "$SINCE" ]; then
-            /tmp/rf -owner "$OWNER" -repo "$REPO_NAME" \
-              -since "$SINCE" -render github-release -out /tmp/rf-out
-          else
-            /tmp/rf -owner "$OWNER" -repo "$REPO_NAME" \
-              -days 3650 -render github-release -out /tmp/rf-out
-          fi
-
-      - name: Update GitHub release body
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
-        run: |
-          RF_FILE=$(ls /tmp/rf-out/*-github-release.md 2>/dev/null | head -1)
-          if [ -z "$RF_FILE" ]; then
-            echo "No labeled PRs found in window — skipping release body update."
-            exit 0
-          fi
-          if [ "${{ inputs.mode }}" = "append" ]; then
-            EXISTING=$(gh release view "${{ inputs.tag }}" \
-              --repo "${{ github.repository }}" --json body -q .body)
-            printf '%s\n\n---\n\n%s' "$EXISTING" "$(cat "$RF_FILE")" > /tmp/notes.md
-          else
-            cp "$RF_FILE" /tmp/notes.md
-          fi
-          gh release edit "${{ inputs.tag }}" \
-            --repo "${{ github.repository }}" \
-            --notes-file /tmp/notes.md
+    uses: bluefunda/.github/.github/workflows/github-release-notes.yml@main
+    with:
+      tag: ${{ inputs.tag }}
+      mode: ${{ inputs.mode }}
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
