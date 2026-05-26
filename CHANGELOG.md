@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/bluefunda/release-foundry/compare/v1.3.1...v1.4.0) (2026-05-26)
+
+
+### Features
+
+* route go-ci jobs to self-hosted runner by default ([#23](https://github.com/bluefunda/release-foundry/issues/23)) ([0d1678c](https://github.com/bluefunda/release-foundry/commit/0d1678c77f7242377e70947319d0c75b73949b52))
+
 ## [1.3.1](https://github.com/bluefunda/release-foundry/compare/v1.3.0...v1.3.1) (2026-05-23)
 
 
