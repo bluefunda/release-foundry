@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.0](https://github.com/bluefunda/release-foundry/compare/v1.4.0...v1.5.0) (2026-05-26)
+
+
+### Features
+
+* route remaining CI/CD jobs to self-hosted runners ([#27](https://github.com/bluefunda/release-foundry/issues/27)) ([9e9779c](https://github.com/bluefunda/release-foundry/commit/9e9779c4523a8d8ac25f70046fda29f03de408fd))
+
+
+### Bug Fixes
+
+* resolve golangci-lint errors surfaced by new CI ([#25](https://github.com/bluefunda/release-foundry/issues/25)) ([6a72f9f](https://github.com/bluefunda/release-foundry/commit/6a72f9fb974abc09cf3f26d80cfa3d7b4ea2cc59))
+
 ## [1.4.0](https://github.com/bluefunda/release-foundry/compare/v1.3.1...v1.4.0) (2026-05-26)
 
 
