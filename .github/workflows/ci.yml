@@ -1,0 +1,10 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  ci:
+    uses: ./.github/workflows/go-ci.yml
