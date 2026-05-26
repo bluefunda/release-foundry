@@ -4,46 +4,41 @@ on:
   workflow_call:
     inputs:
       go-version:
-        description: 'Go version to use'
+        description: 'Go version to use (defaults to version in go.mod)'
         required: false
         type: string
-        default: '1.25'
-      golangci-lint-version:
-        description: 'golangci-lint version'
-        required: false
-        type: string
-        default: 'v2.11.4'
+        default: ''
       goprivate:
         description: >
           GOPRIVATE value for private module access.
           Set to 'github.com/bluefunda/*' for repos with private bluefunda deps.
-          Leave empty for public/OSS repos that have no private dependencies.
+          Leave empty for public/OSS repos.
         required: false
         type: string
-        default: 'github.com/bluefunda/*'
-      run-protobuf:
-        description: 'Generate protobuf files before build/test/lint'
-        required: false
-        type: boolean
-        default: false
+        default: ''
       build-command:
-        description: 'Build command to run'
         required: false
         type: string
         default: 'go build ./...'
       test-command:
-        description: 'Test command to run'
         required: false
         type: string
-        default: 'go test -v -race ./...'
+        default: 'go test -race ./...'
+      golangci-lint-version:
+        required: false
+        type: string
+        default: 'v2.11.4'
       run-codecov:
-        description: 'Upload coverage to Codecov'
+        required: false
+        type: boolean
+        default: false
+      run-protobuf:
         required: false
         type: boolean
         default: false
     secrets:
       GH_PAT:
-        description: 'GitHub PAT for private module access via git. Only needed when goprivate is set and modules require authentication.'
+        description: 'GitHub PAT for private module access. Required when goprivate is set.'
         required: false
 
 jobs:
@@ -54,6 +49,7 @@ jobs:
       GOPRIVATE: ${{ inputs.goprivate }}
     steps:
       - name: Configure Git for private modules
+        if: inputs.goprivate != ''
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
@@ -65,32 +61,25 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: ${{ inputs.go-version }}
+          go-version: ${{ inputs.go-version || '' }}
+          go-version-file: ${{ inputs.go-version == '' && 'go.mod' || '' }}
 
-      - name: Install protoc
-        if: ${{ inputs.run-protobuf }}
+      - name: Install protoc tools
+        if: inputs.run-protobuf
         run: |
-          sudo apt-get update
-          sudo apt-get install -y protobuf-compiler
-
-      - name: Install proto tools
-        if: ${{ inputs.run-protobuf }}
-        run: |
+          sudo apt-get update -q && sudo apt-get install -y protobuf-compiler
           go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
       - name: Generate proto files
-        if: ${{ inputs.run-protobuf }}
+        if: inputs.run-protobuf
         run: make proto
 
-      - name: Download dependencies
-        run: go mod download
-
-      - name: Run tests
-        run: ${{ inputs.test-command }}
+      - run: go mod download
+      - run: ${{ inputs.test-command }}
 
       - name: Upload coverage
-        if: ${{ inputs.run-codecov }}
+        if: inputs.run-codecov
         uses: codecov/codecov-action@v4
         with:
           files: ./coverage.txt
@@ -102,6 +91,7 @@ jobs:
       GOPRIVATE: ${{ inputs.goprivate }}
     steps:
       - name: Configure Git for private modules
+        if: inputs.goprivate != ''
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
@@ -113,26 +103,22 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: ${{ inputs.go-version }}
+          go-version: ${{ inputs.go-version || '' }}
+          go-version-file: ${{ inputs.go-version == '' && 'go.mod' || '' }}
 
-      - name: Install protoc
-        if: ${{ inputs.run-protobuf }}
+      - name: Install protoc tools
+        if: inputs.run-protobuf
         run: |
-          sudo apt-get update
-          sudo apt-get install -y protobuf-compiler
-
-      - name: Install proto tools
-        if: ${{ inputs.run-protobuf }}
-        run: |
+          sudo apt-get update -q && sudo apt-get install -y protobuf-compiler
           go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
       - name: Generate proto files
-        if: ${{ inputs.run-protobuf }}
+        if: inputs.run-protobuf
         run: make proto
 
-      - name: Build
-        run: ${{ inputs.build-command }}
+      - run: go mod download
+      - run: ${{ inputs.build-command }}
 
   lint:
     name: Lint
@@ -141,6 +127,7 @@ jobs:
       GOPRIVATE: ${{ inputs.goprivate }}
     steps:
       - name: Configure Git for private modules
+        if: inputs.goprivate != ''
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
@@ -152,25 +139,22 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: ${{ inputs.go-version }}
+          go-version: ${{ inputs.go-version || '' }}
+          go-version-file: ${{ inputs.go-version == '' && 'go.mod' || '' }}
 
-      - name: Install protoc
-        if: ${{ inputs.run-protobuf }}
+      - name: Install protoc tools
+        if: inputs.run-protobuf
         run: |
-          sudo apt-get update
-          sudo apt-get install -y protobuf-compiler
-
-      - name: Install proto tools
-        if: ${{ inputs.run-protobuf }}
-        run: |
+          sudo apt-get update -q && sudo apt-get install -y protobuf-compiler
           go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
       - name: Generate proto files
-        if: ${{ inputs.run-protobuf }}
+        if: inputs.run-protobuf
         run: make proto
 
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v7
+      - run: go mod download
+
+      - uses: golangci/golangci-lint-action@v7
         with:
           version: ${{ inputs.golangci-lint-version }}
