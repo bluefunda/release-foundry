@@ -121,7 +121,7 @@ func (c *Client) get(url string) ([]byte, http.Header, error) {
 		if err != nil {
 			return nil, nil, err
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		// Handle rate limiting.
 		if resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusTooManyRequests {
