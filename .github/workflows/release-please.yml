@@ -8,6 +8,11 @@ on:
         required: false
         type: string
         default: 'go'
+      runner:
+        description: 'Runner to use. Defaults to self-hosted to avoid consuming GitHub Actions minutes.'
+        required: false
+        type: string
+        default: 'self-hosted'
     secrets:
       GH_PAT:
         description: 'GitHub PAT to trigger downstream workflows from release-please commits'
@@ -22,7 +27,7 @@ on:
 
 jobs:
   release-please:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}
     permissions:
       contents: write
       pull-requests: write

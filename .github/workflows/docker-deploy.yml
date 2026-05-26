@@ -22,6 +22,11 @@ on:
         required: false
         type: string
         default: ''
+      runner:
+        description: 'Runner to use. Defaults to self-hosted to avoid consuming GitHub Actions minutes.'
+        required: false
+        type: string
+        default: 'self-hosted'
   workflow_call:
     inputs:
       tag:
@@ -43,13 +48,18 @@ on:
         required: false
         type: string
         default: ''
+      runner:
+        description: 'Runner to use. Defaults to self-hosted to avoid consuming GitHub Actions minutes.'
+        required: false
+        type: string
+        default: 'self-hosted'
     secrets:
       GH_PAT:
         required: true
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}
     permissions:
       contents: read
       packages: write

@@ -48,7 +48,33 @@ on:
         required: false
 
 jobs:
+  test:
+    name: Test
+    runs-on: self-hosted
+    env:
+      GOPRIVATE: ${{ inputs.goprivate }}
+    steps:
+      - name: Configure Git for private modules
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -n "$GH_PAT" ]; then
+            git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.tag }}
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - run: ${{ inputs.test-command }}
+
   goreleaser:
+    needs: test
     runs-on: macos-latest
     permissions:
       contents: write
@@ -71,9 +97,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-
-      - name: Run tests
-        run: ${{ inputs.test-command }}
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
