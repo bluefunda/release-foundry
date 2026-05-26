@@ -36,6 +36,11 @@ on:
         required: false
         type: boolean
         default: false
+      runner:
+        description: 'Runner to use. Defaults to self-hosted to avoid consuming GitHub Actions minutes. Override with ubuntu-latest if no self-hosted runners are available.'
+        required: false
+        type: string
+        default: 'self-hosted'
     secrets:
       GH_PAT:
         description: 'GitHub PAT for private module access. Required when goprivate is set.'
@@ -44,7 +49,7 @@ on:
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}
     env:
       GOPRIVATE: ${{ inputs.goprivate }}
     steps:
@@ -86,7 +91,7 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}
     env:
       GOPRIVATE: ${{ inputs.goprivate }}
     steps:
@@ -122,7 +127,7 @@ jobs:
 
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}
     env:
       GOPRIVATE: ${{ inputs.goprivate }}
     steps:
