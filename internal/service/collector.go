@@ -82,7 +82,7 @@ func (c *Collector) Collect() (*domain.WeeklySummary, error) {
 		// Include: by label, or by title prefix when no labels exist.
 		hasIncludeLabel := hasAnyLabel(labels, fc.IncludeLabels)
 		_, titleMatched := domain.InferTypeFromTitleWith(item.Title, fc.TitlePrefixMap)
-		if !hasIncludeLabel && !(len(labels) == 0 && titleMatched) {
+		if !hasIncludeLabel && (len(labels) != 0 || !titleMatched) {
 			log.Printf("skip PR #%d %q: no include label or recognized title prefix", item.Number, item.Title)
 			continue
 		}
