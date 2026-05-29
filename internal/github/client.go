@@ -14,12 +14,13 @@ import (
 	"time"
 )
 
-const baseURL = "https://api.github.com"
+const defaultBaseURL = "https://api.github.com"
 
 // Client wraps authenticated access to the GitHub REST API.
 type Client struct {
 	httpClient *http.Client
 	token      string
+	baseURL    string
 }
 
 // NewClient creates a Client with the given personal access token.
@@ -27,6 +28,7 @@ func NewClient(token string) *Client {
 	return &Client{
 		httpClient: &http.Client{Timeout: 30 * time.Second},
 		token:      token,
+		baseURL:    defaultBaseURL,
 	}
 }
 
@@ -67,7 +69,7 @@ func (c *Client) ListMergedPRs(owner, repo string) ([]PRListItem, error) {
 
 	for {
 		url := fmt.Sprintf("%s/repos/%s/%s/pulls?state=closed&base=main&sort=updated&direction=desc&per_page=%d&page=%d",
-			baseURL, owner, repo, perPage, page)
+			c.baseURL, owner, repo, perPage, page)
 
 		body, headers, err := c.get(url)
 		if err != nil {
@@ -92,7 +94,7 @@ func (c *Client) ListMergedPRs(owner, repo string) ([]PRListItem, error) {
 
 // GetPRDetail fetches the full PR object to obtain file-change stats.
 func (c *Client) GetPRDetail(owner, repo string, number int) (*PRDetail, error) {
-	url := fmt.Sprintf("%s/repos/%s/%s/pulls/%d", baseURL, owner, repo, number)
+	url := fmt.Sprintf("%s/repos/%s/%s/pulls/%d", c.baseURL, owner, repo, number)
 	body, _, err := c.get(url)
 	if err != nil {
 		return nil, fmt.Errorf("get PR #%d detail: %w", number, err)
@@ -102,6 +104,45 @@ func (c *Client) GetPRDetail(owner, repo string, number int) (*PRDetail, error) 
 		return nil, fmt.Errorf("decode PR #%d detail: %w", number, err)
 	}
 	return &detail, nil
+}
+
+// SearchReposByTopic returns the names of all repos in org that are tagged with the given topic.
+func (c *Client) SearchReposByTopic(org, topic string) ([]string, error) {
+	type searchResult struct {
+		Items []struct {
+			Name string `json:"name"`
+		} `json:"items"`
+	}
+
+	var names []string
+	page := 1
+	perPage := 100
+
+	for {
+		url := fmt.Sprintf("%s/search/repositories?q=topic:%s+org:%s&per_page=%d&page=%d",
+			c.baseURL, topic, org, perPage, page)
+
+		body, headers, err := c.get(url)
+		if err != nil {
+			return nil, fmt.Errorf("search repos by topic %q in org %q: %w", topic, org, err)
+		}
+
+		var result searchResult
+		if err := json.Unmarshal(body, &result); err != nil {
+			return nil, fmt.Errorf("decode topic search result: %w", err)
+		}
+
+		for _, item := range result.Items {
+			names = append(names, item.Name)
+		}
+
+		if !hasNextPage(headers) || len(result.Items) < perPage {
+			break
+		}
+		page++
+	}
+
+	return names, nil
 }
 
 // get performs an authenticated GET and handles rate-limit backoff.

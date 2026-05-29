@@ -29,6 +29,33 @@ type ReposConfig struct {
 	Repos []RepoEntry `yaml:"repos"`
 }
 
+// Defaults holds the org-level defaults from a repos YAML config.
+type Defaults struct {
+	Owner      string
+	BaseBranch string
+}
+
+// LoadDefaults reads only the defaults section from a repos YAML config.
+// Unlike LoadReposConfig, it does not require any repos to be listed.
+func LoadDefaults(path string) (Defaults, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return Defaults{}, fmt.Errorf("read config %s: %w", path, err)
+	}
+	var cfg ReposConfig
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return Defaults{}, fmt.Errorf("parse config %s: %w", path, err)
+	}
+	d := Defaults{
+		Owner:      cfg.Defaults.Owner,
+		BaseBranch: cfg.Defaults.BaseBranch,
+	}
+	if d.BaseBranch == "" {
+		d.BaseBranch = "main"
+	}
+	return d, nil
+}
+
 // LoadReposConfig reads and parses a YAML config file, applying defaults.
 func LoadReposConfig(path string) (*ReposConfig, error) {
 	data, err := os.ReadFile(path)

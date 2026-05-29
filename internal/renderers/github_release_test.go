@@ -13,7 +13,7 @@ import (
 
 func TestGithubRelease_groupsAndOrders(t *testing.T) {
 	summary := domain.WeeklySummary{
-		Repository: "bluefunda/btp-go",
+		Repository: "example-org/my-service",
 		PullRequests: []domain.PullRequest{
 			{Number: 10, Type: "fix", Title: "fix: nil pointer in connectivity", Author: "alice"},
 			{Number: 11, Type: "feature", Title: "feat: add destination caching", Author: "bob"},
@@ -53,8 +53,32 @@ func TestGithubRelease_groupsAndOrders(t *testing.T) {
 }
 
 func TestGithubRelease_empty(t *testing.T) {
-	out := renderers.GithubRelease(domain.WeeklySummary{Repository: "bluefunda/btp-go"})
+	out := renderers.GithubRelease(domain.WeeklySummary{Repository: "example-org/my-service"})
 	if !strings.Contains(out, "No user-facing changes") {
 		t.Errorf("expected empty-state message, got:\n%s", out)
+	}
+}
+
+func TestRendererRegistry(t *testing.T) {
+	r, ok := renderers.Get("github-release")
+	if !ok {
+		t.Fatal("github-release renderer not registered")
+	}
+	if r.FileExtension() != "md" {
+		t.Errorf("expected file extension 'md', got %q", r.FileExtension())
+	}
+
+	names := renderers.Names()
+	if len(names) == 0 {
+		t.Error("Names() returned empty list")
+	}
+	found := false
+	for _, n := range names {
+		if n == "github-release" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("github-release not in Names()")
 	}
 }

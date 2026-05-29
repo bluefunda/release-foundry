@@ -11,6 +11,10 @@ import (
 	"github.com/release-foundry/internal/domain"
 )
 
+func init() {
+	Register("github-release", githubReleaseRenderer{})
+}
+
 var typeOrder = []string{"feature", "fix", "performance", "security", "infrastructure", "other"}
 
 var typeHeaders = map[string]string{
@@ -22,9 +26,13 @@ var typeHeaders = map[string]string{
 	"other":          "### 🔄 Other",
 }
 
-// GithubRelease renders a WeeklySummary into a GitHub release body (Markdown).
+type githubReleaseRenderer struct{}
+
+func (githubReleaseRenderer) FileExtension() string { return "md" }
+
+// Single renders a WeeklySummary into a GitHub release body (Markdown).
 // Groups PRs by type with emoji headers, deterministic order, no LLM.
-func GithubRelease(summary domain.WeeklySummary) string {
+func (githubReleaseRenderer) Single(summary domain.WeeklySummary) string {
 	byType := make(map[string][]domain.PullRequest)
 	for _, pr := range summary.PullRequests {
 		t := pr.Type
@@ -63,20 +71,30 @@ func GithubRelease(summary domain.WeeklySummary) string {
 	return b.String()
 }
 
-// GithubReleaseBatch renders a BatchSummary into one combined GitHub release body.
-func GithubReleaseBatch(batch domain.BatchSummary) string {
+// Batch renders a BatchSummary into one combined GitHub release body.
+func (githubReleaseRenderer) Batch(batch domain.BatchSummary) string {
 	var b strings.Builder
 	for i, repo := range batch.Repositories {
 		if i > 0 {
 			b.WriteString("\n---\n\n")
 		}
 		fmt.Fprintf(&b, "## %s\n\n", repo.Repository)
-		inner := GithubRelease(repo)
-		// Strip the leading "## What's Changed\n" when embedding in a batch
+		inner := githubReleaseRenderer{}.Single(repo)
+		// Strip the leading "## What's Changed\n" when embedding in a batch.
 		inner = strings.TrimPrefix(inner, "## What's Changed\n")
 		b.WriteString(inner)
 	}
 	return b.String()
+}
+
+// GithubRelease is the backward-compatible function form of the github-release renderer.
+func GithubRelease(summary domain.WeeklySummary) string {
+	return githubReleaseRenderer{}.Single(summary)
+}
+
+// GithubReleaseBatch is the backward-compatible function form for batch rendering.
+func GithubReleaseBatch(batch domain.BatchSummary) string {
+	return githubReleaseRenderer{}.Batch(batch)
 }
 
 // cleanTitle strips the conventional commit prefix from a PR title for display.

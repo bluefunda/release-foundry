@@ -24,21 +24,46 @@ import (
 	"github.com/release-foundry/internal/service"
 )
 
+// buildVersion is injected at link time via -ldflags "-X main.buildVersion=v1.2.3".
+var buildVersion = "dev"
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	token := flag.String("token", "", "GitHub personal access token (overrides GITHUB_TOKEN)")
-	owner := flag.String("owner", "", "GitHub repository owner (overrides GITHUB_OWNER)")
-	repo := flag.String("repo", "", "GitHub repository name (overrides GITHUB_REPO)")
-	days := flag.Int("days", 7, "number of days to look back")
+	// Handle top-level subcommands before flag parsing so that
+	// "release-foundry version" works without any flags.
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "version":
+			fmt.Printf("release-foundry %s\n", buildVersion)
+			os.Exit(0)
+		case "help":
+			printUsage()
+			os.Exit(0)
+		}
+	}
+
+	token := flag.String("token", "", "GitHub personal access token (overrides GITHUB_TOKEN env var)")
+	owner := flag.String("owner", "", "GitHub repository owner/org (overrides GITHUB_OWNER env var)")
+	repo := flag.String("repo", "", "GitHub repository name (overrides GITHUB_REPO env var)")
+	days := flag.Int("days", 7, "number of days to look back for merged PRs")
 	sinceStr := flag.String("since", "", "fetch PRs merged after this RFC3339 timestamp (overrides -days)")
-	output := flag.String("output", "weekly_engineering_summary.json", "output file path")
+	output := flag.String("output", "release-summary.json", "output JSON file path")
 	configPath := flag.String("config", "", "path to multi-repo YAML config for batch mode")
-	renderFlag := flag.String("render", "", "comma-separated renderers to run (e.g. github-release)")
+	topic := flag.String("topic", "", "GitHub topic filter for auto-discovering repos in an org (e.g. active)")
+	renderFlag := flag.String("render", "", fmt.Sprintf("comma-separated renderers to run (available: %s)", strings.Join(renderers.Names(), ", ")))
 	outDir := flag.String("out", ".", "output directory for rendered artifacts")
+
+	flag.Usage = printUsage
 	flag.Parse()
 
 	renderNames := parseRenderFlag(*renderFlag)
+
+	// Topic mode: discover repos by GitHub topic, then process as a batch.
+	if *topic != "" {
+		runTopicBatch(*configPath, *topic, *owner, *token, *days, *sinceStr, *output, renderNames, *outDir)
+		return
+	}
 
 	// Batch mode: process multiple repos from config file.
 	if *configPath != "" {
@@ -68,6 +93,43 @@ func main() {
 	if err := runRenderers(renderNames, *outDir, summary, nil); err != nil {
 		log.Fatalf("render: %v", err)
 	}
+}
+
+func printUsage() {
+	fmt.Fprintf(os.Stderr, `release-foundry — GitHub PR-based release notes generator
+
+Usage:
+  release-foundry [flags]              single-repo mode
+  release-foundry -config repos.yml   batch mode (multiple repos)
+  release-foundry -topic active        topic discovery mode (auto-discover repos by GitHub topic)
+  release-foundry version              print version
+
+Flags:
+`)
+	flag.PrintDefaults()
+	fmt.Fprintf(os.Stderr, `
+Available renderers: %s
+
+Examples:
+  # Single repo, last 7 days
+  release-foundry -owner myorg -repo myrepo -render github-release -out ./out
+
+  # Single repo since a specific date
+  release-foundry -owner myorg -repo myrepo -since 2024-01-01T00:00:00Z -render github-release
+
+  # Batch mode from config file
+  release-foundry -config repos.yml -days 14 -render github-release -out ./out
+
+  # Auto-discover repos tagged "active" in an org
+  release-foundry -topic active -owner myorg -render github-release -out ./out
+
+Environment variables:
+  GITHUB_TOKEN   GitHub personal access token
+  GITHUB_OWNER   Default repository owner
+  GITHUB_REPO    Default repository name
+
+See docs/cli-reference.md for full documentation.
+`, strings.Join(renderers.Names(), ", "))
 }
 
 func runBatch(configPath, flagToken string, days int, sinceStr string, output string, renderNames []string, outDir string) {
@@ -119,6 +181,93 @@ func runBatch(configPath, flagToken string, days int, sinceStr string, output st
 			continue
 		}
 
+		batch.Repositories = append(batch.Repositories, *summary)
+	}
+
+	if batch.Repositories == nil {
+		batch.Repositories = []domain.WeeklySummary{}
+	}
+
+	if err := writeJSON(output, batch); err != nil {
+		log.Fatalf("write output: %v", err)
+	}
+
+	total := 0
+	for _, r := range batch.Repositories {
+		total += r.SummaryStats.TotalPRs
+	}
+	log.Printf("wrote %s (%d repos, %d total PRs)", output, len(batch.Repositories), total)
+
+	if err := runRenderers(renderNames, outDir, nil, &batch); err != nil {
+		log.Fatalf("render: %v", err)
+	}
+}
+
+// runTopicBatch discovers repos in org tagged with topic, then processes them as a batch.
+// If configPath is non-empty, defaults (owner, baseBranch) are read from the config file.
+func runTopicBatch(configPath, topic, flagOwner, flagToken string, days int, sinceStr, output string, renderNames []string, outDir string) {
+	token, err := resolveToken(flagToken)
+	if err != nil {
+		log.Fatalf("token error: %v", err)
+	}
+
+	client := gh.NewClient(token)
+	since, err := parseSince(sinceStr, days)
+	if err != nil {
+		log.Fatalf("invalid -since: %v", err)
+	}
+
+	// Resolve owner and baseBranch: flag takes precedence; fall back to config defaults.
+	orgOwner := flagOwner
+	baseBranch := "main"
+	if configPath != "" {
+		defaults, err := config.LoadDefaults(configPath)
+		if err != nil {
+			log.Fatalf("config error: %v", err)
+		}
+		if orgOwner == "" {
+			orgOwner = defaults.Owner
+		}
+		baseBranch = defaults.BaseBranch
+	}
+	if orgOwner == "" {
+		orgOwner, err = resolve("", "GITHUB_OWNER", "GitHub owner", false)
+		if err != nil {
+			log.Fatalf("owner error: %v", err)
+		}
+	}
+
+	log.Printf("discovering repos in org %q with topic %q", orgOwner, topic)
+	repoNames, err := client.SearchReposByTopic(orgOwner, topic)
+	if err != nil {
+		log.Fatalf("topic search: %v", err)
+	}
+	if len(repoNames) == 0 {
+		log.Fatalf("no repos found in org %q with topic %q", orgOwner, topic)
+	}
+	log.Printf("found %d repos", len(repoNames))
+
+	batch := domain.BatchSummary{
+		GeneratedAt:    time.Now().UTC().Format(time.RFC3339),
+		TimeWindowDays: days,
+	}
+
+	for _, name := range repoNames {
+		log.Printf("processing %s/%s", orgOwner, name)
+		cfg := domain.Config{
+			Token:      token,
+			Owner:      orgOwner,
+			Repo:       name,
+			BaseBranch: baseBranch,
+			WindowDays: days,
+			Since:      since,
+		}
+		collector := service.NewCollector(client, cfg)
+		summary, err := collector.Collect()
+		if err != nil {
+			log.Printf("error collecting %s/%s: %v (skipping)", orgOwner, name, err)
+			continue
+		}
 		batch.Repositories = append(batch.Repositories, *summary)
 	}
 
@@ -264,27 +413,29 @@ func runRenderers(names []string, outDir string, summary *domain.WeeklySummary, 
 		return fmt.Errorf("create output dir: %w", err)
 	}
 	for _, name := range names {
-		switch name {
-		case "github-release":
-			if batch != nil {
-				content := renderers.GithubReleaseBatch(*batch)
-				dest := filepath.Join(outDir, "github-release.md")
-				if err := os.WriteFile(dest, []byte(content), 0o644); err != nil {
-					return fmt.Errorf("write %s: %w", dest, err)
-				}
-				log.Printf("wrote %s", dest)
-			} else if summary != nil {
-				repoSlug := strings.ReplaceAll(summary.Repository, "/", "-")
-				dest := filepath.Join(outDir, repoSlug+"-github-release.md")
-				content := renderers.GithubRelease(*summary)
-				if err := os.WriteFile(dest, []byte(content), 0o644); err != nil {
-					return fmt.Errorf("write %s: %w", dest, err)
-				}
-				log.Printf("wrote %s", dest)
-			}
-		default:
-			log.Printf("unknown renderer %q — skipping", name)
+		r, ok := renderers.Get(name)
+		if !ok {
+			log.Printf("unknown renderer %q — skipping (available: %s)", name, strings.Join(renderers.Names(), ", "))
+			continue
 		}
+
+		var content string
+		var filename string
+
+		if batch != nil {
+			content = r.Batch(*batch)
+			filename = fmt.Sprintf("%s.%s", name, r.FileExtension())
+		} else if summary != nil {
+			content = r.Single(*summary)
+			repoSlug := strings.ReplaceAll(summary.Repository, "/", "-")
+			filename = fmt.Sprintf("%s-%s.%s", repoSlug, name, r.FileExtension())
+		}
+
+		dest := filepath.Join(outDir, filename)
+		if err := os.WriteFile(dest, []byte(content), 0o644); err != nil {
+			return fmt.Errorf("write %s: %w", dest, err)
+		}
+		log.Printf("wrote %s", dest)
 	}
 	return nil
 }
