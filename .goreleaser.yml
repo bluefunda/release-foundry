@@ -1,0 +1,125 @@
+version: 2
+
+project_name: release-foundry
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: release-foundry
+    main: ./cmd/release-foundry
+    binary: release-foundry
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s -w
+      - -X main.buildVersion={{ .Version }}
+    mod_timestamp: '{{ .CommitTimestamp }}'
+
+archives:
+  - id: release-foundry
+    builds: [release-foundry]
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_
+      {{- if eq .Os "darwin" }}macOS{{ else }}{{ .Os }}{{ end }}_
+      {{- .Arch }}
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE
+      - README.md
+      - repos.example.yml
+
+checksum:
+  name_template: 'checksums.txt'
+  algorithm: sha256
+
+sboms:
+  - artifacts: archive
+    documents:
+      - >-
+        {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}.sbom.json
+
+snapshot:
+  version_template: '{{ incpatch .Version }}-dev'
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - '^chore'
+      - '^ci'
+      - '^docs'
+      - '^test'
+      - Merge pull request
+      - Merge branch
+
+# Homebrew tap support.
+# Set HOMEBREW_TAP_TOKEN env var and configure a tap repo (org/homebrew-tap).
+# See docs/homebrew.md for setup instructions.
+brews:
+  - name: release-foundry
+    homepage: https://github.com/{{ .Env.GITHUB_REPOSITORY_OWNER }}/release-foundry
+    description: >-
+      GitHub PR-based release notes generator. Collects merged pull requests,
+      filters by label, and renders structured release notes in multiple formats.
+    license: Apache-2.0
+    repository:
+      owner: '{{ .Env.GITHUB_REPOSITORY_OWNER }}'
+      name: homebrew-tap
+      token: '{{ .Env.HOMEBREW_TAP_TOKEN }}'
+    commit_author:
+      name: github-actions[bot]
+      email: github-actions[bot]@users.noreply.github.com
+    install: |
+      bin.install "release-foundry"
+    test: |
+      system "#{bin}/release-foundry", "version"
+
+# Linux packages (deb + rpm).
+nfpms:
+  - id: release-foundry
+    builds: [release-foundry]
+    package_name: release-foundry
+    homepage: https://github.com/{{ .Env.GITHUB_REPOSITORY_OWNER }}/release-foundry
+    description: >-
+      GitHub PR-based release notes generator. Collects merged pull requests,
+      filters by label, and renders structured release notes in multiple formats.
+    maintainer: release-foundry contributors
+    license: Apache-2.0
+    formats:
+      - deb
+      - rpm
+    contents:
+      - src: ./LICENSE
+        dst: /usr/share/doc/release-foundry/LICENSE
+      - src: ./README.md
+        dst: /usr/share/doc/release-foundry/README.md
+      - src: ./repos.example.yml
+        dst: /usr/share/doc/release-foundry/repos.example.yml
+
+# macOS notarization (optional — requires secrets in CI).
+# See docs/macos-notarization.md for setup.
+# notarize:
+#   macos:
+#     - enabled: '{{ isEnvSet "MACOS_CERTIFICATE" }}'
+#       sign:
+#         certificate: '{{ .Env.MACOS_CERTIFICATE }}'
+#         password: '{{ .Env.MACOS_CERTIFICATE_PWD }}'
+#       notarize:
+#         issuer_id: '{{ .Env.NOTARIZATION_ISSUER_ID }}'
+#         key_id: '{{ .Env.NOTARIZATION_KEY_ID }}'
+#         key: '{{ .Env.NOTARIZATION_KEY }}'

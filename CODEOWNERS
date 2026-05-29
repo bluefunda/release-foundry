@@ -1,0 +1,18 @@
+# CODEOWNERS
+#
+# Each line is a file pattern followed by one or more owners.
+# Owners are matched in order; the last matching pattern wins.
+# See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default: all maintainers review everything
+*                   @phani-puttabakula
+
+# Core domain and renderer logic
+internal/           @phani-puttabakula
+cmd/                @phani-puttabakula
+
+# CI/CD workflows
+.github/workflows/  @phani-puttabakula
+
+# Distribution config
+.goreleaser.yml     @phani-puttabakula
