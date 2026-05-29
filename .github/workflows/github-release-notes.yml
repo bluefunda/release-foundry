@@ -52,9 +52,9 @@ jobs:
         run: |
           RF_REPO="${{ inputs.release-foundry-repo }}"
           if [ -z "$RF_REPO" ]; then
-            # Default to the repo that owns this workflow file (works correctly
-            # when called via uses: <org>/release-foundry/.github/workflows/...@main)
-            RF_REPO="${{ github.action_repository }}"
+            # Derive the repo from the workflow_ref (e.g. "owner/repo/.github/workflows/...@ref")
+            # github.action_repository is empty in reusable workflow contexts.
+            RF_REPO=$(echo "${{ github.workflow_ref }}" | cut -d/ -f1-2)
           fi
           echo "repo=$RF_REPO" >> "$GITHUB_OUTPUT"
 
@@ -72,7 +72,8 @@ jobs:
           cache-dependency-path: release-foundry-src/go.sum
 
       - name: Build release-foundry binary
-        run: go build -o ./rf ./release-foundry-src/cmd/release-foundry
+        working-directory: release-foundry-src
+        run: go build -o ../rf ./cmd/release-foundry
 
       - name: Find previous release date
         id: prev-release
