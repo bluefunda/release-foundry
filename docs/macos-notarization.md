@@ -54,7 +54,7 @@ Add these secrets to each repo that uses `go-binary-release.yml`:
 
 ```yaml
 goreleaser:
-  uses: bluefunda/release-foundry/.github/workflows/go-binary-release.yml@main
+  uses: <org>/release-foundry/.github/workflows/go-binary-release.yml@main
   secrets:
     GH_PAT: ${{ secrets.GH_PAT }}
     HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}

@@ -1,9 +1,13 @@
 # Binary (root only, not cmd/release-foundry/)
 /release-foundry
 
-# Output
+# Output files
+release-summary.json
 weekly_engineering_summary.json
 *.json
+
+# Local batch config (contains org/repo names — not for public repos)
+repos.yml
 
 # Go
 vendor/

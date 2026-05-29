@@ -1,149 +1,191 @@
 # CLI Reference
 
-## Prerequisites
+## Synopsis
 
-- Go 1.22+
-- A GitHub personal access token with `repo` scope (or fine-grained token with pull-request read access)
-
-## Build
-
-```bash
-make build
 ```
-
-## Configuration
-
-Each of `token`, `owner`, and `repo` is resolved in order:
-
-1. **CLI flag** (`-token`, `-owner`, `-repo`)
-2. **Environment variable** (`GITHUB_TOKEN`, `GITHUB_OWNER`, `GITHUB_REPO`)
-3. **Interactive prompt** (token input is masked)
-
-```bash
-# Flags
-./release-foundry -token ghp_... -owner your-org -repo your-repo
-
-# Environment variables
-export GITHUB_TOKEN="ghp_..."
-export GITHUB_OWNER="your-org"
-export GITHUB_REPO="your-repo"
-./release-foundry
-
-# Mix — token from env, owner/repo as flags
-./release-foundry -owner your-org -repo your-repo
+release-foundry [flags]
+release-foundry version
+release-foundry help
 ```
 
 ## Flags
 
-| Flag      | Default                           | Description                                   |
-|-----------|-----------------------------------|-----------------------------------------------|
-| `-token`  | `$GITHUB_TOKEN`                   | GitHub personal access token                  |
-| `-owner`  | `$GITHUB_OWNER`                   | GitHub repository owner                       |
-| `-repo`   | `$GITHUB_REPO`                    | GitHub repository name                        |
-| `-days`   | `7`                               | Number of days to look back                   |
-| `-since`  | *(none)*                          | RFC3339 timestamp — overrides `-days`         |
-| `-output` | `weekly_engineering_summary.json` | Output file path                              |
-| `-render` | *(none)*                          | Renderer to use (e.g. `github-release`)       |
-| `-out`    | *(none)*                          | Output directory for rendered files           |
-| `-config` | *(none)*                          | Path to multi-repo YAML config (batch mode)   |
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `-token` | string | `GITHUB_TOKEN` env → `gh auth token` → prompt | GitHub personal access token |
+| `-owner` | string | `GITHUB_OWNER` env → prompt | Repository owner or org |
+| `-repo` | string | `GITHUB_REPO` env → prompt | Repository name |
+| `-days` | int | `7` | Number of days to look back for merged PRs |
+| `-since` | string | (none) | Fetch PRs merged after this RFC3339 timestamp (overrides `-days`) |
+| `-output` | string | `release-summary.json` | JSON output file path |
+| `-render` | string | (none) | Comma-separated renderer names (e.g. `github-release`) |
+| `-out` | string | `.` | Output directory for rendered artifacts |
+| `-config` | string | (none) | Path to multi-repo YAML config (batch mode) |
+| `-topic` | string | (none) | GitHub topic filter for auto-discovering repos in an org |
+
+## Operating modes
+
+### Single-repo mode
+
+Default mode. Processes one repository specified via flags or environment variables.
 
 ```bash
-# Last 14 days, custom output
-./release-foundry -owner my-org -repo my-repo -days 14 -output summary.json
-
-# Since a specific timestamp
-./release-foundry -owner my-org -repo my-repo -since 2026-04-01T00:00:00Z -render github-release -out ./out
+release-foundry -owner myorg -repo myrepo -days 14 -render github-release -out ./out
 ```
 
-## Batch Mode
+Token resolution order: `-token` flag → `GITHUB_TOKEN` env → `gh auth token` → interactive prompt.
 
-Use `-config` to process multiple repositories in one run. `-owner` and `-repo` flags are ignored when `-config` is set.
+Owner/repo resolution order: flag → environment variable → interactive prompt.
+
+### Batch mode (`-config`)
+
+Processes multiple repositories from a YAML config file.
 
 ```bash
-./release-foundry -config repos.yml -days 7 -output batch.json
+release-foundry -config repos.yml -days 7 -render github-release -out ./out
 ```
 
-### Config file format
+Output: a single `release-summary.json` with all repos, and one rendered file per
+renderer in the output directory.
+
+### Topic discovery mode (`-topic`)
+
+Auto-discovers repositories in an org by GitHub topic, then processes them as a batch.
+
+```bash
+release-foundry -topic active -owner myorg -render github-release -out ./out
+
+# With a config file to supply owner/baseBranch defaults
+release-foundry -topic active -config repos.yml -render github-release -out ./out
+```
+
+The `-owner` flag (or `GITHUB_OWNER` env) specifies which org to search. If `-config`
+is also provided, the config's `defaults.owner` fills in if `-owner` is not set.
+
+## Batch config format (repos.yml)
 
 ```yaml
 defaults:
-  owner: your-org
-  baseBranch: main
+  owner: myorg          # applied to all repos that don't set their own owner
+  baseBranch: main      # default base branch
 
 repos:
-  - repo: your-repo
-    edition: enterprise
+  - repo: api-server
 
-  - repo: your-repo-free
-    edition: free
+  - repo: platform
+    edition: enterprise   # included in JSON output; useful for segmenting
 
-  - repo: your-plugins
-    edition: enterprise
+  - repo: plugin-sdk
+    baseBranch: release/v2
     includeLabels: [feature, fix, plugin]
-    excludeLabels: [internal, wip]
+    excludeLabels: [internal]
 ```
 
-- `defaults.owner` and `defaults.baseBranch` apply to all repos unless overridden per entry.
-- `edition` tags each repo's output (e.g. `"enterprise"`, `"free"`).
-- `includeLabels` / `excludeLabels` override the default filter rules per repo.
+## Filtering rules
 
-See `repos.example.yml` for a working example.
+A PR is **included** if:
 
-## Filtering
+1. It is merged (not open or draft)
+2. Its base branch matches `baseBranch` (default: `main`)
+3. Its merge date falls within the time window (`-since` or `-days`)
+4. It has at least one of the include labels **or** its title matches a conventional
+   commit prefix that maps to an included type
+5. It does not have an exclude label **and** its title does not match an excluded prefix
 
-PRs must satisfy all of:
+Default include labels: `feature`, `fix`, `performance`, `security`, `infrastructure`
 
-1. Merged into `main`
-2. Merged within the configured time window
-3. Has at least one include label: `feature`, `fix`, `performance`, `security`, `infrastructure`
-4. Does **not** have any exclude label: `internal`, `refactor`, `chore`
+Default exclude labels: `internal`, `refactor`, `chore`
 
-## Output Format
+Excluded conventional commit prefixes: `chore`, `refactor`, `docs`, `ci`, `test`,
+`style`
+
+## Output schema
+
+### Single-repo JSON (`release-summary.json`)
 
 ```json
 {
-  "generated_at": "2025-01-15T10:00:00Z",
-  "repository": "your-org/your-repo",
+  "generated_at": "2024-04-15T12:00:00Z",
+  "repository": "myorg/myrepo",
+  "edition": "enterprise",
   "time_window_days": 7,
   "summary_stats": {
     "total_prs": 12,
-    "features": 5,
-    "fixes": 4,
-    "performance": 3
+    "features": 4,
+    "fixes": 6,
+    "performance": 2
   },
   "pull_requests": [
     {
-      "number": 456,
+      "number": 42,
       "type": "feature",
-      "title": "Add SSO login",
-      "customer_impact_raw": "Users can now sign in with SSO.",
-      "technical_summary": "Full PR body text...",
+      "title": "feat: add multi-repo batch mode",
+      "customer_impact_raw": "Teams can now process all repos in one command.",
+      "technical_summary": "Implemented batch YAML config loader and parallel collection.",
+      "metrics": "Reduced release prep time from 30 min to 2 min.",
+      "marketing_notes": "First tool to support org-wide release notes in one pass.",
       "labels": ["feature"],
-      "author": "engineer",
-      "files_changed": 12,
-      "additions": 340,
-      "deletions": 20,
-      "merged_at": "2025-01-14T18:30:00Z"
+      "author": "alice",
+      "files_changed": 8,
+      "additions": 320,
+      "deletions": 45,
+      "merged_at": "2024-04-14T09:30:00Z"
     }
   ]
 }
 ```
 
-If the PR body contains a `## Customer Impact` section, its content is extracted into `customer_impact_raw`. Otherwise the field is empty. No AI summarization is performed — this tool only collates structured data.
+### Batch JSON
 
-### Batch output
+Wraps an array of single-repo summaries:
 
 ```json
 {
-  "generated_at": "2025-01-15T10:00:00Z",
+  "generated_at": "2024-04-15T12:00:00Z",
   "time_window_days": 7,
   "repositories": [
-    {
-      "repository": "your-org/your-repo",
-      "edition": "enterprise",
-      "summary_stats": { "total_prs": 5, "features": 3, "fixes": 2 },
-      "pull_requests": [...]
-    }
+    { /* WeeklySummary for repo 1 */ },
+    { /* WeeklySummary for repo 2 */ }
   ]
 }
+```
+
+## Available renderers
+
+| Name | Output file | Description |
+|------|-------------|-------------|
+| `github-release` | `<repo>-github-release.md` | Markdown grouped by PR type with emoji headers. Suitable for GitHub release body. |
+
+Additional renderers can be added. See [CONTRIBUTING.md](../CONTRIBUTING.md) for the
+renderer interface.
+
+## Environment variables
+
+| Variable | Description |
+|----------|-------------|
+| `GITHUB_TOKEN` | GitHub personal access token |
+| `GITHUB_OWNER` | Default repository owner or org |
+| `GITHUB_REPO` | Default repository name |
+
+## Examples
+
+```bash
+# Last 30 days, single repo
+release-foundry -owner golang -repo go -days 30 -render github-release -out ./out
+
+# Since a specific tag date
+release-foundry -owner myorg -repo myrepo -since 2024-01-15T00:00:00Z \
+  -render github-release -out ./out
+
+# Batch: all repos in repos.yml, last 2 weeks
+release-foundry -config repos.yml -days 14 -render github-release -out ./out
+
+# Topic discovery: all repos tagged "release-managed" in the org
+release-foundry -topic release-managed -owner myorg -render github-release -out ./out
+
+# JSON only (no renderer), custom output path
+release-foundry -owner myorg -repo myrepo -output ./data/summary.json
+
+# Print version
+release-foundry version
 ```

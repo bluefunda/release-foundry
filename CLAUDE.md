@@ -1,6 +1,7 @@
 # CLAUDE.md
 
-Release tooling binary and CI/CD workflow library for bluefunda. See [AGENTS.md](AGENTS.md) for pipeline context and binary usage.
+release-foundry — a GitHub PR-based release notes generator and reusable CI/CD
+workflow library. See [AGENTS.md](AGENTS.md) for pipeline context and binary usage.
 
 ## Go style
 

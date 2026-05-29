@@ -1,21 +1,33 @@
+# repos.example.yml — example batch config for release-foundry
+#
+# Copy this to repos.yml (gitignored) and fill in your org/repos.
+# Run: release-foundry -config repos.yml -days 7 -render github-release -out ./out
+
 defaults:
-  owner: bluefunda
-  baseBranch: main
+  owner: myorg        # GitHub org or user that owns all repos below
+  baseBranch: main    # default base branch (override per-repo if needed)
 
 repos:
-  - repo: xpro
+  # Minimal entry — inherits defaults above
+  - repo: api-server
+
+  # With edition tag (included in JSON output for segmenting output by tier)
+  - repo: platform-pro
     edition: enterprise
 
-  - repo: xpro-free
+  - repo: platform-community
     edition: free
 
-  # Example with custom label overrides:
-  # - repo: xpro-plugins
-  #   edition: enterprise
-  #   includeLabels:
-  #     - feature
-  #     - fix
-  #     - plugin
-  #   excludeLabels:
-  #     - internal
-  #     - wip
+  # With custom label overrides
+  - repo: plugin-sdk
+    includeLabels:
+      - feature
+      - fix
+      - plugin
+    excludeLabels:
+      - internal
+      - wip
+
+  # Different base branch
+  - repo: legacy-service
+    baseBranch: release/v2
