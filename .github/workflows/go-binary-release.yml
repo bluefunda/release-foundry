@@ -85,7 +85,6 @@ jobs:
     runs-on: macos-latest
     permissions:
       contents: write
-      id-token: write  # for SLSA provenance
     env:
       GOPRIVATE: ${{ inputs.goprivate }}
     steps:
