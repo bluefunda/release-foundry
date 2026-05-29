@@ -6,4 +6,31 @@ on:
 
 jobs:
   pr-title:
-    uses: bluefunda/.github/.github/workflows/pr-title-check.yml@main
+    name: Conventional Commits
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Check PR title follows Conventional Commits
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          # Conventional Commits pattern:
+          # type(optional-scope)!: description
+          # Types: feat, fix, chore, docs, refactor, perf, test, ci, style, build, revert
+          PATTERN='^(feat|fix|chore|docs|refactor|perf|test|ci|style|build|revert)(\([a-z0-9/_-]+\))?(!)?: .{1,100}$'
+          if ! echo "$PR_TITLE" | grep -qE "$PATTERN"; then
+            echo "PR title does not follow Conventional Commits format."
+            echo ""
+            echo "Title: $PR_TITLE"
+            echo ""
+            echo "Expected format: type(scope): description"
+            echo "  Examples:"
+            echo "    feat: add multi-repo batch mode"
+            echo "    fix(github): handle rate limit on large repos"
+            echo "    chore!: drop Go 1.21 support"
+            echo ""
+            echo "Valid types: feat, fix, chore, docs, refactor, perf, test, ci, style, build, revert"
+            exit 1
+          fi
+          echo "PR title OK: $PR_TITLE"

@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       tag:
-        description: 'Release tag to build'
+        description: 'Release tag to build (e.g. v1.2.3)'
         required: true
         type: string
       goreleaser-version:
@@ -25,36 +25,42 @@ on:
       goprivate:
         description: >
           GOPRIVATE value for private module access.
-          Set to 'github.com/bluefunda/*' for repos with private bluefunda deps.
           Leave empty for public/OSS repos that have no private dependencies.
         required: false
         type: string
-        default: 'github.com/bluefunda/*'
+        default: ''
     secrets:
       GH_PAT:
-        description: 'GitHub PAT for private module access via git. Only needed when goprivate is set and modules require authentication.'
+        description: 'GitHub PAT for private module access via git. Only needed when goprivate is set.'
         required: false
       HOMEBREW_TAP_TOKEN:
+        description: 'GitHub PAT with write access to the Homebrew tap repo.'
         required: false
       MACOS_CERTIFICATE:
+        description: 'Base64-encoded Developer ID Application certificate (.p12).'
         required: false
       MACOS_CERTIFICATE_PWD:
+        description: 'Password for the macOS certificate.'
         required: false
       NOTARIZATION_ISSUER_ID:
+        description: 'App Store Connect API issuer ID for notarization.'
         required: false
       NOTARIZATION_KEY_ID:
+        description: 'App Store Connect API key ID for notarization.'
         required: false
       NOTARIZATION_KEY:
+        description: 'App Store Connect API private key (.p8 content) for notarization.'
         required: false
 
 jobs:
   test:
     name: Test
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     env:
       GOPRIVATE: ${{ inputs.goprivate }}
     steps:
       - name: Configure Git for private modules
+        if: inputs.goprivate != ''
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
@@ -70,6 +76,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+          cache: true
 
       - run: ${{ inputs.test-command }}
 
@@ -78,10 +85,12 @@ jobs:
     runs-on: macos-latest
     permissions:
       contents: write
+      id-token: write  # for SLSA provenance
     env:
       GOPRIVATE: ${{ inputs.goprivate }}
     steps:
       - name: Configure Git for private modules
+        if: inputs.goprivate != ''
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
@@ -97,6 +106,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+          cache: true
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6

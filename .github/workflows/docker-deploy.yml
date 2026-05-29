@@ -1,14 +1,17 @@
 name: Docker Deploy
 
+# Reusable workflow: builds a multi-arch Docker image, pushes to GHCR,
+# and optionally updates a compose file in a gitops repository.
+
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Version tag for the Docker image'
+        description: 'Version tag for the Docker image (e.g. v1.2.3)'
         required: true
         type: string
       image-name:
-        description: 'Docker image name (defaults to repo name)'
+        description: 'Docker image name (defaults to the calling repo name)'
         required: false
         type: string
         default: ''
@@ -17,24 +20,37 @@ on:
         required: false
         type: string
         default: ''
+      gitops-repo:
+        description: 'GitOps repo to update (org/repo). Leave empty to skip gitops update.'
+        required: false
+        type: string
+        default: ''
+      gitops-compose-path:
+        description: 'Path to the compose.yaml inside the gitops repo. Required when gitops-repo is set.'
+        required: false
+        type: string
+        default: ''
       komodo-stack:
-        description: 'Komodo stack name — updates stacks/<subdir>/<name>/compose.yaml in gitops'
+        description: >
+          (Deprecated) Komodo stack name. Used to locate the compose.yaml via find
+          when gitops-repo is set but gitops-compose-path is not.
+          Prefer gitops-compose-path for an explicit path.
         required: false
         type: string
         default: ''
       runner:
-        description: 'Runner to use. Defaults to self-hosted to avoid consuming GitHub Actions minutes.'
+        description: 'Runner label. Defaults to ubuntu-latest.'
         required: false
         type: string
-        default: 'self-hosted'
+        default: 'ubuntu-latest'
   workflow_call:
     inputs:
       tag:
-        description: 'Version tag for the Docker image'
+        description: 'Version tag for the Docker image (e.g. v1.2.3)'
         required: true
         type: string
       image-name:
-        description: 'Docker image name (defaults to repo name)'
+        description: 'Docker image name (defaults to the calling repo name)'
         required: false
         type: string
         default: ''
@@ -43,19 +59,33 @@ on:
         required: false
         type: string
         default: ''
+      gitops-repo:
+        description: 'GitOps repo to update (org/repo). Leave empty to skip gitops update.'
+        required: false
+        type: string
+        default: ''
+      gitops-compose-path:
+        description: 'Path to the compose.yaml inside the gitops repo. Required when gitops-repo is set.'
+        required: false
+        type: string
+        default: ''
       komodo-stack:
-        description: 'Komodo stack name — updates stacks/<subdir>/<name>/compose.yaml in gitops'
+        description: >
+          (Deprecated) Komodo stack name. Used to locate the compose.yaml via find
+          when gitops-repo is set but gitops-compose-path is not.
+          Prefer gitops-compose-path for an explicit path.
         required: false
         type: string
         default: ''
       runner:
-        description: 'Runner to use. Defaults to self-hosted to avoid consuming GitHub Actions minutes.'
+        description: 'Runner label. Defaults to ubuntu-latest.'
         required: false
         type: string
-        default: 'self-hosted'
+        default: 'ubuntu-latest'
     secrets:
       GH_PAT:
-        required: true
+        description: 'GitHub PAT with write access to the gitops repo (only needed when gitops-repo is set).'
+        required: false
 
 jobs:
   build-and-push:
@@ -65,8 +95,7 @@ jobs:
       packages: write
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -87,33 +116,49 @@ jobs:
           if [ -z "$IMAGE_NAME" ]; then
             IMAGE_NAME="${GITHUB_REPOSITORY##*/}"
           fi
-          echo "name=$IMAGE_NAME" >> $GITHUB_OUTPUT
+          echo "name=$IMAGE_NAME" >> "$GITHUB_OUTPUT"
 
-      - name: Build and Push Docker Image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          build-args: |
-            GH_PAT=${{ secrets.GH_PAT }}
-            ${{ inputs.build-args }}
+          platforms: linux/amd64,linux/arm64
+          build-args: ${{ inputs.build-args }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/${{ steps.image.outputs.name }}:${{ inputs.tag }}
             ghcr.io/${{ github.repository_owner }}/${{ steps.image.outputs.name }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Update image tag in gitops
-        if: ${{ inputs.komodo-stack != '' }}
+      - name: Update image tag in gitops repo
+        if: inputs.gitops-repo != ''
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          git clone "https://x-access-token:${GH_PAT}@github.com/bluefunda/gitops.git" /tmp/gitops
+          if [ -z "$GH_PAT" ]; then
+            echo "::warning::GH_PAT not set — skipping gitops update"
+            exit 0
+          fi
+
+          git clone "https://x-access-token:${GH_PAT}@github.com/${{ inputs.gitops-repo }}.git" /tmp/gitops
           cd /tmp/gitops
 
-          COMPOSE_FILE=$(find stacks -path "*/${{ inputs.komodo-stack }}/compose.yaml" | head -1)
+          # Resolve compose file path: explicit path takes precedence over komodo-stack search.
+          COMPOSE_FILE="${{ inputs.gitops-compose-path }}"
+          if [ -z "$COMPOSE_FILE" ] && [ -n "${{ inputs.komodo-stack }}" ]; then
+            COMPOSE_FILE=$(find stacks -name "compose.yaml" -path "*/${{ inputs.komodo-stack }}/compose.yaml" | head -1)
+            if [ -z "$COMPOSE_FILE" ]; then
+              echo "::warning::No compose.yaml found for stack '${{ inputs.komodo-stack }}' — skipping gitops update"
+              exit 0
+            fi
+          fi
           if [ -z "$COMPOSE_FILE" ]; then
-            echo "::warning::No compose file found for stack ${{ inputs.komodo-stack }} — skipping gitops update"
+            echo "::warning::No gitops-compose-path or komodo-stack set — skipping gitops update"
+            exit 0
+          fi
+          if [ ! -f "$COMPOSE_FILE" ]; then
+            echo "::warning::Compose file not found at $COMPOSE_FILE — skipping gitops update"
             exit 0
           fi
 
@@ -127,6 +172,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes — gitops already up to date"
           else
-            git commit -m "chore: deploy ${{ inputs.komodo-stack }} ${{ inputs.tag }}"
+            git commit -m "chore: update $COMPOSE_FILE to ${{ inputs.tag }}"
             git push
           fi

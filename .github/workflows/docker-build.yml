@@ -1,17 +1,18 @@
 name: Manual Docker Build
+
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Image tag
-        default: latest
+        description: 'Image tag (e.g. v1.2.3 or latest)'
+        default: 'latest'
         required: false
         type: string
+
 jobs:
   deploy:
-    uses: bluefunda/release-foundry/.github/workflows/docker-deploy.yml@main
+    uses: ./.github/workflows/docker-deploy.yml
     with:
       tag: ${{ inputs.tag || 'latest' }}
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
-
