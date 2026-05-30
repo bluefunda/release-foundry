@@ -65,12 +65,24 @@ Release created → github-release-notes.yml → binary runs → GitHub release 
 | `internal/renderers` | Pluggable output renderers + registry |
 | `internal/service` | Collect → filter → render orchestration |
 
+## Go style
+
+- Standard library patterns preferred: accept interfaces, return concrete types
+- Small, single-method interfaces over large "god interfaces"
+- `context.Context` as first argument on all IO-bound functions
+- Errors wrapped with `%w`; sentinel errors for expected failure cases
+- Table-driven tests; prefer real implementations over mocks
+
 ## Conventions
 
-- See [CLAUDE.md](CLAUDE.md) for Go style and commit conventions
-- New render formats go in `internal/renderers/` — implement the `Renderer`
-  interface and register via `init()` — no changes to `main.go` required
-- `repos.yml` (gitignored) configures multi-repo batch runs; `repos.example.yml`
-  is the committed template
-- All workflows default to `ubuntu-latest`; override with the `runner` input if
-  needed
+- Conventional Commits for all commit messages and PR titles (`feat:`, `fix:`, `chore:`, etc.)
+- Release Please manages versioning and CHANGELOG — do not manually edit CHANGELOG.md
+- New render formats go in `internal/renderers/` — implement the `Renderer` interface and register via `init()` — no changes to `main.go` required
+- `repos.yml` (gitignored) configures multi-repo batch runs; `repos.example.yml` is the committed template
+- All workflows default to `ubuntu-latest`; override with the `runner` input if needed
+- Use `/go-review` to run a full idiomatic Go audit of this repo
+
+## CI
+
+- `go test -race ./...` must pass before merging
+- `golangci-lint` runs on every PR

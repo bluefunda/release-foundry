@@ -1,9 +1,7 @@
-// Copyright 2024 BlueFunda, Inc.
-// SPDX-License-Identifier: Apache-2.0
-
 package service
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
@@ -14,19 +12,25 @@ import (
 	gh "github.com/release-foundry/internal/github"
 )
 
+// githubClient is the subset of gh.Client methods used by Collector.
+type githubClient interface {
+	ListMergedPRs(ctx context.Context, owner, repo string) ([]gh.PRListItem, error)
+	GetPRDetail(ctx context.Context, owner, repo string, number int) (*gh.PRDetail, error)
+}
+
 // Collector orchestrates fetching, filtering, and structuring PR data.
 type Collector struct {
-	client *gh.Client
+	client githubClient
 	cfg    domain.Config
 }
 
 // NewCollector creates a Collector with the given GitHub client and config.
-func NewCollector(client *gh.Client, cfg domain.Config) *Collector {
+func NewCollector(client githubClient, cfg domain.Config) *Collector {
 	return &Collector{client: client, cfg: cfg}
 }
 
 // Collect fetches PRs, applies filtering rules, enriches with detail, and returns a WeeklySummary.
-func (c *Collector) Collect() (*domain.WeeklySummary, error) {
+func (c *Collector) Collect(ctx context.Context) (*domain.WeeklySummary, error) {
 	log.Printf("fetching merged PRs for %s/%s (base=%s, since=%s)",
 		c.cfg.Owner, c.cfg.Repo, c.cfg.BaseBranch, c.cfg.Since.Format(time.RFC3339))
 
@@ -36,7 +40,7 @@ func (c *Collector) Collect() (*domain.WeeklySummary, error) {
 		fc = domain.DefaultFilterConfig()
 	}
 
-	items, err := c.client.ListMergedPRs(c.cfg.Owner, c.cfg.Repo)
+	items, err := c.client.ListMergedPRs(ctx, c.cfg.Owner, c.cfg.Repo)
 	if err != nil {
 		return nil, fmt.Errorf("list merged PRs: %w", err)
 	}
@@ -88,7 +92,7 @@ func (c *Collector) Collect() (*domain.WeeklySummary, error) {
 		}
 
 		// Fetch file-change stats.
-		detail, err := c.client.GetPRDetail(c.cfg.Owner, c.cfg.Repo, item.Number)
+		detail, err := c.client.GetPRDetail(ctx, c.cfg.Owner, c.cfg.Repo, item.Number)
 		if err != nil {
 			log.Printf("warning: could not fetch detail for PR #%d: %v (skipping stats)", item.Number, err)
 			detail = &gh.PRDetail{}

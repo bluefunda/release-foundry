@@ -1,10 +1,8 @@
-// Copyright 2024 BlueFunda, Inc.
-// SPDX-License-Identifier: Apache-2.0
-
 package main
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -80,7 +78,7 @@ func main() {
 	client := gh.NewClient(cfg.Token)
 	collector := service.NewCollector(client, cfg)
 
-	summary, err := collector.Collect()
+	summary, err := collector.Collect(context.Background())
 	if err != nil {
 		log.Fatalf("collection failed: %v", err)
 	}
@@ -175,7 +173,7 @@ func runBatch(configPath, flagToken string, days int, sinceStr string, output st
 		}
 
 		collector := service.NewCollector(client, cfg)
-		summary, err := collector.Collect()
+		summary, err := collector.Collect(context.Background())
 		if err != nil {
 			log.Printf("error collecting %s/%s: %v (skipping)", entry.Owner, entry.Repo, err)
 			continue
@@ -238,7 +236,7 @@ func runTopicBatch(configPath, topic, flagOwner, flagToken string, days int, sin
 	}
 
 	log.Printf("discovering repos in org %q with topic %q", orgOwner, topic)
-	repoNames, err := client.SearchReposByTopic(orgOwner, topic)
+	repoNames, err := client.SearchReposByTopic(context.Background(), orgOwner, topic)
 	if err != nil {
 		log.Fatalf("topic search: %v", err)
 	}
@@ -263,7 +261,7 @@ func runTopicBatch(configPath, topic, flagOwner, flagToken string, days int, sin
 			Since:      since,
 		}
 		collector := service.NewCollector(client, cfg)
-		summary, err := collector.Collect()
+		summary, err := collector.Collect(context.Background())
 		if err != nil {
 			log.Printf("error collecting %s/%s: %v (skipping)", orgOwner, name, err)
 			continue
@@ -395,7 +393,7 @@ func parseRenderFlag(s string) []string {
 		return nil
 	}
 	var out []string
-	for _, r := range strings.Split(s, ",") {
+	for r := range strings.SplitSeq(s, ",") {
 		if r = strings.TrimSpace(r); r != "" {
 			out = append(out, r)
 		}
@@ -445,7 +443,7 @@ func writeJSON(path string, v any) error {
 	if err != nil {
 		return fmt.Errorf("create file %s: %w", path, err)
 	}
-	defer func() { _ = f.Close() }()
+	defer func() { _ = f.Close() }() // os.File write errors surface via Encode
 
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "  ")

@@ -1,9 +1,7 @@
-// Copyright 2024 BlueFunda, Inc.
-// SPDX-License-Identifier: Apache-2.0
-
 package github
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -71,7 +69,7 @@ func TestSearchReposByTopic(t *testing.T) {
 			c := NewClient("test-token")
 			c.baseURL = srv.URL
 
-			got, err := c.SearchReposByTopic(tc.org, tc.topic)
+			got, err := c.SearchReposByTopic(context.Background(), tc.org, tc.topic)
 
 			if tc.wantErrSub != "" {
 				if err == nil {

@@ -1,6 +1,3 @@
-// Copyright 2024 BlueFunda, Inc.
-// SPDX-License-Identifier: Apache-2.0
-
 // Package renderers provides pluggable output renderers for release summary data.
 // Each renderer transforms domain.WeeklySummary or domain.BatchSummary into a
 // specific output format (Markdown, JSON, etc.).

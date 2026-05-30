@@ -1,9 +1,7 @@
-// Copyright 2024 BlueFunda, Inc.
-// SPDX-License-Identifier: Apache-2.0
-
 package github
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -62,7 +60,7 @@ type PRDetail struct {
 
 // ListMergedPRs fetches all merged PRs for the repo, paginating through all results.
 // It returns PRs in the order the API provides (most-recently updated first).
-func (c *Client) ListMergedPRs(owner, repo string) ([]PRListItem, error) {
+func (c *Client) ListMergedPRs(ctx context.Context, owner, repo string) ([]PRListItem, error) {
 	var all []PRListItem
 	page := 1
 	perPage := 100
@@ -71,7 +69,7 @@ func (c *Client) ListMergedPRs(owner, repo string) ([]PRListItem, error) {
 		url := fmt.Sprintf("%s/repos/%s/%s/pulls?state=closed&base=main&sort=updated&direction=desc&per_page=%d&page=%d",
 			c.baseURL, owner, repo, perPage, page)
 
-		body, headers, err := c.get(url)
+		body, headers, err := c.get(ctx, url)
 		if err != nil {
 			return nil, fmt.Errorf("list PRs page %d: %w", page, err)
 		}
@@ -93,9 +91,9 @@ func (c *Client) ListMergedPRs(owner, repo string) ([]PRListItem, error) {
 }
 
 // GetPRDetail fetches the full PR object to obtain file-change stats.
-func (c *Client) GetPRDetail(owner, repo string, number int) (*PRDetail, error) {
+func (c *Client) GetPRDetail(ctx context.Context, owner, repo string, number int) (*PRDetail, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/pulls/%d", c.baseURL, owner, repo, number)
-	body, _, err := c.get(url)
+	body, _, err := c.get(ctx, url)
 	if err != nil {
 		return nil, fmt.Errorf("get PR #%d detail: %w", number, err)
 	}
@@ -107,7 +105,7 @@ func (c *Client) GetPRDetail(owner, repo string, number int) (*PRDetail, error) 
 }
 
 // SearchReposByTopic returns the names of all repos in org that are tagged with the given topic.
-func (c *Client) SearchReposByTopic(org, topic string) ([]string, error) {
+func (c *Client) SearchReposByTopic(ctx context.Context, org, topic string) ([]string, error) {
 	type searchResult struct {
 		Items []struct {
 			Name string `json:"name"`
@@ -122,7 +120,7 @@ func (c *Client) SearchReposByTopic(org, topic string) ([]string, error) {
 		url := fmt.Sprintf("%s/search/repositories?q=topic:%s+org:%s&per_page=%d&page=%d",
 			c.baseURL, topic, org, perPage, page)
 
-		body, headers, err := c.get(url)
+		body, headers, err := c.get(ctx, url)
 		if err != nil {
 			return nil, fmt.Errorf("search repos by topic %q in org %q: %w", topic, org, err)
 		}
@@ -146,9 +144,9 @@ func (c *Client) SearchReposByTopic(org, topic string) ([]string, error) {
 }
 
 // get performs an authenticated GET and handles rate-limit backoff.
-func (c *Client) get(url string) ([]byte, http.Header, error) {
+func (c *Client) get(ctx context.Context, url string) ([]byte, http.Header, error) {
 	for {
-		req, err := http.NewRequest(http.MethodGet, url, nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -162,18 +160,23 @@ func (c *Client) get(url string) ([]byte, http.Header, error) {
 		if err != nil {
 			return nil, nil, err
 		}
-		defer func() { _ = resp.Body.Close() }()
 
-		// Handle rate limiting.
+		// Handle rate limiting: close body before sleeping so the connection is released.
 		if resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusTooManyRequests {
+			_ = resp.Body.Close() // unread; connection will not be reused
 			if wait := rateLimitWait(resp.Header); wait > 0 {
 				log.Printf("rate limited, waiting %s", wait)
-				time.Sleep(wait)
+				select {
+				case <-time.After(wait):
+				case <-ctx.Done():
+					return nil, nil, ctx.Err()
+				}
 				continue
 			}
 		}
 
 		body, err := io.ReadAll(resp.Body)
+		_ = resp.Body.Close() // safe to discard: body already fully read
 		if err != nil {
 			return nil, nil, fmt.Errorf("read response body: %w", err)
 		}

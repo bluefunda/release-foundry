@@ -1,6 +1,3 @@
-// Copyright 2024 BlueFunda, Inc.
-// SPDX-License-Identifier: Apache-2.0
-
 package domain
 
 import (
