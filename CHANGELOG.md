@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.6.0](https://github.com/bluefunda/release-foundry/compare/v1.5.0...v1.6.0) (2026-05-30)
+
+
+### Features
+
+* add GoReleaser config, SECURITY.md, CONTRIBUTING.md, Homebrew docs ([8cf89e2](https://github.com/bluefunda/release-foundry/commit/8cf89e243966f65af9781e9b137b210a09dca5c3))
+* add renderer interface, topic discovery, and version subcommand ([47507c4](https://github.com/bluefunda/release-foundry/commit/47507c49dc1e973b423aa74706898d693a202c8b))
+* generalize workflows — add gitops-repo/gitops-compose-path inputs, remove hardcoded defaults ([13a452b](https://github.com/bluefunda/release-foundry/commit/13a452b3e46063310b61081c7786d0008ec019d9))
+
+
+### Bug Fixes
+
+* derive release-foundry repo from workflow_ref; fix go build working-directory ([cb4253d](https://github.com/bluefunda/release-foundry/commit/cb4253de9fca72075ed07241170b6e1c8c1a9ae7))
+* remove unused id-token permission from go-binary-release — breaks callers ([6a82ac1](https://github.com/bluefunda/release-foundry/commit/6a82ac1fc95a9e6db61c4f6cf057ba38a242df18))
+
 ## [1.5.0](https://github.com/bluefunda/release-foundry/compare/v1.4.0...v1.5.0) (2026-05-26)
 
 
