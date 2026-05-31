@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1](https://github.com/bluefunda/release-foundry/compare/v1.6.0...v1.6.1) (2026-05-31)
+
+
+### Bug Fixes
+
+* auto-inject GH_PAT into Docker build-args when provided as secret ([#30](https://github.com/bluefunda/release-foundry/issues/30)) ([a49676a](https://github.com/bluefunda/release-foundry/commit/a49676ad1539f39189b8148546db2ad3e7e88710))
+
 ## [1.6.0](https://github.com/bluefunda/release-foundry/compare/v1.5.0...v1.6.0) (2026-05-30)
 
 
