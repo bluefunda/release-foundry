@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.2](https://github.com/bluefunda/release-foundry/compare/v1.6.1...v1.6.2) (2026-05-31)
+
+
+### Bug Fixes
+
+* use repository_owner to resolve release-foundry source repo ([#32](https://github.com/bluefunda/release-foundry/issues/32)) ([fe771dc](https://github.com/bluefunda/release-foundry/commit/fe771dccb4daaab09def254b324179530c519981))
+
 ## [1.6.1](https://github.com/bluefunda/release-foundry/compare/v1.6.0...v1.6.1) (2026-05-31)
 
 
