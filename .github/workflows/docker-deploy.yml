@@ -118,13 +118,27 @@ jobs:
           fi
           echo "name=$IMAGE_NAME" >> "$GITHUB_OUTPUT"
 
+      - name: Prepare build args
+        id: build-args
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          ARGS="${{ inputs.build-args }}"
+          if [ -n "$GH_PAT" ]; then
+            [ -n "$ARGS" ] && ARGS="${ARGS}"$'\n'"GH_PAT=${GH_PAT}" || ARGS="GH_PAT=${GH_PAT}"
+          fi
+          DELIM=$(openssl rand -hex 8)
+          echo "value<<${DELIM}" >> "$GITHUB_OUTPUT"
+          echo "${ARGS}" >> "$GITHUB_OUTPUT"
+          echo "${DELIM}" >> "$GITHUB_OUTPUT"
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          build-args: ${{ inputs.build-args }}
+          build-args: ${{ steps.build-args.outputs.value }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/${{ steps.image.outputs.name }}:${{ inputs.tag }}
             ghcr.io/${{ github.repository_owner }}/${{ steps.image.outputs.name }}:latest
