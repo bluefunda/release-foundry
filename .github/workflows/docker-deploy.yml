@@ -99,6 +99,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Configure Docker host for rootless Docker
+        run: |
+          if [ ! -S /var/run/docker.sock ] && [ -S "/run/user/$(id -u)/docker.sock" ]; then
+            echo "DOCKER_HOST=unix:///run/user/$(id -u)/docker.sock" >> "$GITHUB_ENV"
+          fi
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
