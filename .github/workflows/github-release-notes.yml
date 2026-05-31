@@ -52,9 +52,9 @@ jobs:
         run: |
           RF_REPO="${{ inputs.release-foundry-repo }}"
           if [ -z "$RF_REPO" ]; then
-            # Derive the repo from the workflow_ref (e.g. "owner/repo/.github/workflows/...@ref")
-            # github.action_repository is empty in reusable workflow contexts.
-            RF_REPO=$(echo "${{ github.workflow_ref }}" | cut -d/ -f1-2)
+            # github.workflow_ref resolves to the calling workflow in newer GitHub Actions runners,
+            # not the reusable workflow — so derive the repo from the org name instead.
+            RF_REPO="${{ github.repository_owner }}/release-foundry"
           fi
           echo "repo=$RF_REPO" >> "$GITHUB_OUTPUT"
 
