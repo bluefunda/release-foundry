@@ -35,6 +35,11 @@ on:
         required: false
         type: string
         default: ''
+      runner:
+        description: 'Runner label. Defaults to self-hosted.'
+        required: false
+        type: string
+        default: 'self-hosted'
     secrets:
       GH_PAT:
         description: 'GitHub PAT with repo read/write access'
@@ -43,7 +48,7 @@ on:
 jobs:
   release-notes:
     name: Generate Release Notes
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}
     permissions:
       contents: write
     steps:
