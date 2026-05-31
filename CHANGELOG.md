@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.3](https://github.com/bluefunda/release-foundry/compare/v1.6.2...v1.6.3) (2026-05-31)
+
+
+### Bug Fixes
+
+* default all reusable workflow runners to self-hosted ([#34](https://github.com/bluefunda/release-foundry/issues/34)) ([e8985bf](https://github.com/bluefunda/release-foundry/commit/e8985bf6bf291d6d2494873272ff6ef23ecc8c80))
+* detect and configure rootless Docker socket on self-hosted runners ([#36](https://github.com/bluefunda/release-foundry/issues/36)) ([21b2bdf](https://github.com/bluefunda/release-foundry/commit/21b2bdfb90c19e28617d25ae21f552088c7d42f0))
+
 ## [1.6.2](https://github.com/bluefunda/release-foundry/compare/v1.6.1...v1.6.2) (2026-05-31)
 
 
