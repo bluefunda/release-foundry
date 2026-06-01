@@ -39,10 +39,10 @@ on:
         type: string
         default: ''
       runner:
-        description: 'Runner label. Defaults to self-hosted.'
+        description: 'Runner label. Defaults to ubuntu-latest (GitHub-hosted). Pass self-hosted for private repos.'
         required: false
         type: string
-        default: 'self-hosted'
+        default: 'ubuntu-latest'
   workflow_call:
     inputs:
       tag:
@@ -78,10 +78,10 @@ on:
         type: string
         default: ''
       runner:
-        description: 'Runner label. Defaults to self-hosted.'
+        description: 'Runner label. Defaults to ubuntu-latest (GitHub-hosted). Pass self-hosted for private repos.'
         required: false
         type: string
-        default: 'self-hosted'
+        default: 'ubuntu-latest'
     secrets:
       GH_PAT:
         description: 'GitHub PAT with write access to the gitops repo (only needed when gitops-repo is set).'

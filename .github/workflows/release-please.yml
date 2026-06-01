@@ -9,10 +9,10 @@ on:
         type: string
         default: 'go'
       runner:
-        description: 'Runner to use. Defaults to self-hosted to avoid consuming GitHub Actions minutes.'
+        description: 'Runner label. Defaults to ubuntu-latest (GitHub-hosted). Pass self-hosted for private repos.'
         required: false
         type: string
-        default: 'self-hosted'
+        default: 'ubuntu-latest'
     secrets:
       GH_PAT:
         description: 'GitHub PAT to trigger downstream workflows from release-please commits'
