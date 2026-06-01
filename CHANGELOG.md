@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.4](https://github.com/bluefunda/release-foundry/compare/v1.6.3...v1.6.4) (2026-06-01)
+
+
+### Bug Fixes
+
+* clean up stale /tmp/gitops before cloning in gitops update step ([a295be1](https://github.com/bluefunda/release-foundry/commit/a295be1982c3c0d89efdf68dd94a495b9fe6704e))
+* default runner to ubuntu-latest for public/OSS compatibility ([#38](https://github.com/bluefunda/release-foundry/issues/38)) ([9ad23d9](https://github.com/bluefunda/release-foundry/commit/9ad23d9cfa3750811055d4e011ed60b6035416a3))
+
 ## [1.6.3](https://github.com/bluefunda/release-foundry/compare/v1.6.2...v1.6.3) (2026-05-31)
 
 
