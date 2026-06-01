@@ -170,6 +170,7 @@ jobs:
             exit 0
           fi
 
+          rm -rf /tmp/gitops
           git clone "https://x-access-token:${GH_PAT}@github.com/${{ inputs.gitops-repo }}.git" /tmp/gitops
           cd /tmp/gitops
 
