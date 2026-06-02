@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.5](https://github.com/bluefunda/release-foundry/compare/v1.6.4...v1.6.5) (2026-06-02)
+
+
+### Bug Fixes
+
+* add QEMU for multi-arch builds, remove gitops coupling, update docs ([#42](https://github.com/bluefunda/release-foundry/issues/42)) ([888b26c](https://github.com/bluefunda/release-foundry/commit/888b26c6081f38958db81e4bacfe463b8346d78b))
+
 ## [1.6.4](https://github.com/bluefunda/release-foundry/compare/v1.6.3...v1.6.4) (2026-06-01)
 
 
