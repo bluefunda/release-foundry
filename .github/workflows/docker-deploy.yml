@@ -20,6 +20,11 @@ on:
         required: false
         type: string
         default: ''
+      context:
+        description: 'Docker build context path. Defaults to repo root. Use for monorepos (e.g. ./backend).'
+        required: false
+        type: string
+        default: '.'
       runner:
         description: 'Runner label. Defaults to ubuntu-latest (GitHub-hosted). Pass self-hosted for private repos.'
         required: false
@@ -41,6 +46,11 @@ on:
         required: false
         type: string
         default: ''
+      context:
+        description: 'Docker build context path. Defaults to repo root. Use for monorepos (e.g. ./backend).'
+        required: false
+        type: string
+        default: '.'
       runner:
         description: 'Runner label. Defaults to ubuntu-latest (GitHub-hosted). Pass self-hosted for private repos.'
         required: false
@@ -117,7 +127,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ${{ inputs.context }}
           push: true
           platforms: linux/amd64,linux/arm64
           build-args: ${{ steps.build-args.outputs.value }}
