@@ -1,27 +1,39 @@
 # release-foundry
 
-A GitHub PR-based release notes generator and CI/CD workflow library. Collects
-merged pull requests, filters by label and time window, and renders structured
-release notes in multiple formats — no LLM required for the deterministic output,
-AI-ready data for the generative layer.
+release-foundry provides two things:
+
+1. **Reusable GitHub Actions workflows** — a workflow library that any repo can
+   call to build and publish a multi-arch Docker image to
+   `ghcr.io/bluefunda/<repo>`, run CI, enforce Conventional Commits, manage
+   releases, and more.
+
+2. **A Go binary** — collects merged pull requests from one or more GitHub
+   repositories, filters by label, and renders structured output (JSON + Markdown)
+   ready to feed to an LLM to produce social media posts, blog intros, and
+   newsletter copy.
 
 ---
 
 ## What it does
 
-release-foundry sits at the end of your release pipeline. After a tag or release
-is created, it:
+### 1. Docker image builds (reusable workflows)
 
-1. **Collects** merged PRs from one or more GitHub repositories within a time window
-2. **Filters** by label (feature, fix, performance, security, infrastructure)
-3. **Renders** structured output into one or more formats (GitHub release body, JSON)
-4. **Outputs** files ready to publish or feed to an LLM for blog posts / social content
+Repos in the `bluefunda` org call release-foundry's reusable workflows from their
+own `workflow.yml` files. The `docker-deploy.yml` workflow handles the full
+multi-arch build and push to `ghcr.io/bluefunda/<repo>` — no per-repo
+Dockerfile boilerplate required beyond the Dockerfile itself.
+
+### 2. PR feed for social media content (binary)
+
+After a release, the `release-foundry` binary collects merged PRs, filters them
+by label, and writes structured JSON and Markdown files. Feed those files to an
+LLM to generate LinkedIn posts, tweet threads, blog intros, or newsletters.
 
 ```
 git tag v1.2.0
-  └─ release-foundry runs
-       ├─ GitHub release body (Markdown, grouped by type)
-       └─ release-summary.json (full structured data)
+  └─ release-foundry binary runs
+       ├─ GitHub release body (Markdown, grouped by label)
+       └─ release-summary.json (structured feed for LLM consumption)
 ```
 
 ---
@@ -214,7 +226,7 @@ release-foundry ships generic, reusable workflows for Go projects.
 on: [pull_request, push]
 jobs:
   ci:
-    uses: <org>/release-foundry/.github/workflows/go-ci.yml@main
+    uses: bluefunda/release-foundry/.github/workflows/go-ci.yml@main
 ```
 
 Inputs: `go-version`, `build-command`, `test-command`, `golangci-lint-version`,
@@ -226,7 +238,7 @@ Inputs: `go-version`, `build-command`, `test-command`, `golangci-lint-version`,
 goreleaser:
   needs: release-please
   if: needs.release-please.outputs.release_created == 'true'
-  uses: <org>/release-foundry/.github/workflows/go-binary-release.yml@main
+  uses: bluefunda/release-foundry/.github/workflows/go-binary-release.yml@main
   with:
     tag: ${{ needs.release-please.outputs.tag_name }}
   secrets:
@@ -240,7 +252,7 @@ Supports macOS code signing and notarization. See [docs/macos-notarization.md](d
 
 ```yaml
 release-please:
-  uses: <org>/release-foundry/.github/workflows/release-please.yml@main
+  uses: bluefunda/release-foundry/.github/workflows/release-please.yml@main
   secrets:
     GH_PAT: ${{ secrets.GH_PAT }}
 ```
@@ -253,34 +265,37 @@ Outputs: `release_created`, `tag_name`.
 release-notes:
   needs: release-please
   if: needs.release-please.outputs.release_created == 'true'
-  uses: <org>/release-foundry/.github/workflows/github-release-notes.yml@main
+  uses: bluefunda/release-foundry/.github/workflows/github-release-notes.yml@main
   with:
     tag: ${{ needs.release-please.outputs.tag_name }}
-    release-foundry-repo: <org>/release-foundry
+    release-foundry-repo: bluefunda/release-foundry
   secrets:
     GH_PAT: ${{ secrets.GH_PAT }}
 ```
 
 ### `docker-deploy.yml` — Multi-arch Docker build + GHCR push
 
+Builds a `linux/amd64` + `linux/arm64` image and pushes to
+`ghcr.io/<org>/<repo>:<tag>` and `ghcr.io/<org>/<repo>:latest`.
+
 ```yaml
 deploy:
   needs: release-please
   if: needs.release-please.outputs.release_created == 'true'
-  uses: <org>/release-foundry/.github/workflows/docker-deploy.yml@main
+  uses: bluefunda/release-foundry/.github/workflows/docker-deploy.yml@main
   with:
     tag: ${{ needs.release-please.outputs.tag_name }}
-    gitops-repo: myorg/gitops                   # optional
-    gitops-compose-path: apps/myapp/compose.yaml # optional
   secrets:
-    GH_PAT: ${{ secrets.GH_PAT }}
+    GH_PAT: ${{ secrets.GH_PAT }}   # only needed for private Go module dependencies
 ```
+
+Inputs: `tag` (required), `image-name` (defaults to repo name), `build-args`, `runner`.
 
 ### `pr-title-check.yml` — Conventional Commits enforcement
 
 ```yaml
 pr-title:
-  uses: <org>/release-foundry/.github/workflows/pr-title-check.yml@main
+  uses: bluefunda/release-foundry/.github/workflows/pr-title-check.yml@main
 ```
 
 ---
