@@ -22,16 +22,6 @@ on:
         required: false
         type: string
         default: 'go test -race -count=1 ./...'
-      goreleaser-config:
-        description: 'Path to .goreleaser.yml (for monorepos). Defaults to root .goreleaser.yml.'
-        required: false
-        type: string
-        default: ''
-      go-version-file:
-        description: 'Path to go version file (go.mod or go.work). Defaults to go.mod.'
-        required: false
-        type: string
-        default: 'go.mod'
       goprivate:
         description: >
           GOPRIVATE value for private module access.
@@ -85,7 +75,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version-file: ${{ inputs.go-version-file }}
+          go-version-file: go.mod
           cache: true
 
       - run: ${{ inputs.test-command }}
@@ -121,7 +111,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           version: ${{ inputs.goreleaser-version }}
-          args: ${{ inputs.goreleaser-args }}${{ inputs.goreleaser-config != '' && format(' --config {0}', inputs.goreleaser-config) || '' }}
+          args: ${{ inputs.goreleaser-args }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
