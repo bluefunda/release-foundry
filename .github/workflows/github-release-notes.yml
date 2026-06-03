@@ -85,16 +85,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
         run: |
-          PREV_TAG=$(gh release list \
-            --repo "${{ github.repository }}" \
-            --limit 5 \
-            --json tagName,isDraft,isPrerelease \
-            --jq '[.[] | select(.isDraft == false and .isPrerelease == false) | .tagName][1] // ""')
+          PREV_TAG=$(gh api \
+            "repos/${{ github.repository }}/releases?per_page=10" \
+            --jq '[.[] | select(.draft == false and .prerelease == false) | .tag_name][1] // ""')
           if [ -n "$PREV_TAG" ]; then
-            PREV_DATE=$(gh release view "$PREV_TAG" \
-              --repo "${{ github.repository }}" \
-              --json publishedAt \
-              --jq .publishedAt)
+            PREV_DATE=$(gh api \
+              "repos/${{ github.repository }}/releases/tags/$PREV_TAG" \
+              --jq '.published_at')
             echo "since=$PREV_DATE" >> "$GITHUB_OUTPUT"
             echo "Previous release: $PREV_TAG ($PREV_DATE)"
           else
