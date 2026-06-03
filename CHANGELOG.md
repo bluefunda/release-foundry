@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.6](https://github.com/bluefunda/release-foundry/compare/v1.6.5...v1.6.6) (2026-06-03)
+
+
+### Bug Fixes
+
+* pin binfmt to qemu-v8.1.5 to avoid tonistiigi/binfmt:latest JSON regression ([ad2d683](https://github.com/bluefunda/release-foundry/commit/ad2d683b23674b14b65de68b4ce5f29848d5ea52))
+* remove sboms from goreleaser config ([#45](https://github.com/bluefunda/release-foundry/issues/45)) ([47071d4](https://github.com/bluefunda/release-foundry/commit/47071d4e7d3b413d5150ba3042aa44ba8226b9e3))
+
 ## [1.6.5](https://github.com/bluefunda/release-foundry/compare/v1.6.4...v1.6.5) (2026-06-02)
 
 
