@@ -85,16 +85,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
         run: |
-          PREV_TAG=$(gh release list \
-            --repo "${{ github.repository }}" \
-            --limit 5 \
-            --json tagName,isDraft,isPrerelease \
-            --jq '[.[] | select(.isDraft == false and .isPrerelease == false) | .tagName][1] // ""')
+          PREV_TAG=$(gh api "repos/${{ github.repository }}/releases" \
+            --jq '[.[] | select(.draft == false and .prerelease == false) | .tag_name][1] // ""')
           if [ -n "$PREV_TAG" ]; then
-            PREV_DATE=$(gh release view "$PREV_TAG" \
-              --repo "${{ github.repository }}" \
-              --json publishedAt \
-              --jq .publishedAt)
+            PREV_DATE=$(gh api "repos/${{ github.repository }}/releases/tags/$PREV_TAG" \
+              --jq .published_at)
             echo "since=$PREV_DATE" >> "$GITHUB_OUTPUT"
             echo "Previous release: $PREV_TAG ($PREV_DATE)"
           else
@@ -135,9 +130,8 @@ jobs:
           echo "Updating release ${{ inputs.tag }} with notes from $NOTES_FILE"
 
           if [ "${{ inputs.mode }}" = "append" ]; then
-            EXISTING=$(gh release view "${{ inputs.tag }}" \
-              --repo "${{ github.repository }}" \
-              --json body --jq .body)
+            EXISTING=$(gh api "repos/${{ github.repository }}/releases/tags/${{ inputs.tag }}" \
+              --jq .body)
             COMBINED="${EXISTING}"$'\n\n'"$(cat "$NOTES_FILE")"
             printf '%s' "$COMBINED" | gh release edit "${{ inputs.tag }}" \
               --repo "${{ github.repository }}" \
