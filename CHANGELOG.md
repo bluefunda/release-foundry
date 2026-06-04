@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.7](https://github.com/bluefunda/release-foundry/compare/v1.6.6...v1.6.7) (2026-06-04)
+
+
+### Bug Fixes
+
+* add platforms input and make QEMU conditional ([5615384](https://github.com/bluefunda/release-foundry/commit/56153841179219aa57bdbfab4bcf58891cf8bc1a))
+
 ## [1.6.6](https://github.com/bluefunda/release-foundry/compare/v1.6.5...v1.6.6) (2026-06-03)
 
 
