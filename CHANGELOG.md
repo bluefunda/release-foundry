@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.8](https://github.com/bluefunda/release-foundry/compare/v1.6.7...v1.6.8) (2026-06-04)
+
+
+### Bug Fixes
+
+* replace gh release list/view --json with gh api calls ([de960ca](https://github.com/bluefunda/release-foundry/commit/de960ca8821f11727da268c940516dc99ac6ad1b))
+
 ## [1.6.7](https://github.com/bluefunda/release-foundry/compare/v1.6.6...v1.6.7) (2026-06-04)
 
 
