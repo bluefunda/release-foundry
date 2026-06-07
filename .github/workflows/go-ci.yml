@@ -53,6 +53,10 @@ jobs:
     env:
       GOPRIVATE: ${{ inputs.goprivate }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
       - name: Configure Git for private modules
         if: inputs.goprivate != ''
         env:
@@ -61,8 +65,6 @@ jobs:
           if [ -n "$GH_PAT" ]; then
             git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
           fi
-
-      - uses: actions/checkout@v4
 
       - uses: actions/setup-go@v5
         with:
@@ -96,6 +98,10 @@ jobs:
     env:
       GOPRIVATE: ${{ inputs.goprivate }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
       - name: Configure Git for private modules
         if: inputs.goprivate != ''
         env:
@@ -104,8 +110,6 @@ jobs:
           if [ -n "$GH_PAT" ]; then
             git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
           fi
-
-      - uses: actions/checkout@v4
 
       - uses: actions/setup-go@v5
         with:
@@ -133,6 +137,10 @@ jobs:
     env:
       GOPRIVATE: ${{ inputs.goprivate }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
       - name: Configure Git for private modules
         if: inputs.goprivate != ''
         env:
@@ -141,8 +149,6 @@ jobs:
           if [ -n "$GH_PAT" ]; then
             git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
           fi
-
-      - uses: actions/checkout@v4
 
       - uses: actions/setup-go@v5
         with:
