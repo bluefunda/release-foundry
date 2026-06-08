@@ -69,6 +69,7 @@ jobs:
           repository: ${{ steps.rf-repo.outputs.repo }}
           path: release-foundry-src
           token: ${{ secrets.GH_PAT || github.token }}
+          persist-credentials: false
 
       - uses: actions/setup-go@v5
         with:
