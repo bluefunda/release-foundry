@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.10](https://github.com/bluefunda/release-foundry/compare/v1.6.9...v1.6.10) (2026-06-08)
+
+
+### Bug Fixes
+
+* **go-ci:** use job-scoped GIT_CONFIG env vars instead of global extraHeader ([0d6ccba](https://github.com/bluefunda/release-foundry/commit/0d6ccba1b4edb29b8096e56afb66279fc58cee34))
+
 ## [1.6.9](https://github.com/bluefunda/release-foundry/compare/v1.6.8...v1.6.9) (2026-06-08)
 
 
