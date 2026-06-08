@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.6.9](https://github.com/bluefunda/release-foundry/compare/v1.6.8...v1.6.9) (2026-06-08)
+
+
+### Bug Fixes
+
+* **go-ci:** move checkout before PAT config, add persist-credentials: false ([#56](https://github.com/bluefunda/release-foundry/issues/56)) ([85e8ac1](https://github.com/bluefunda/release-foundry/commit/85e8ac13132f71287bdf7adb6db04620c0d772e9))
+* **go-ci:** use http.extraHeader for auth instead of URL-embedded token ([a495be6](https://github.com/bluefunda/release-foundry/commit/a495be645f3f620de6c988e3e465598d16fa7982))
+* **release-notes:** don't persist credentials on release-foundry checkout ([0838c28](https://github.com/bluefunda/release-foundry/commit/0838c2842cef55cb92061f9c6020e408100107c4))
+
 ## [1.6.8](https://github.com/bluefunda/release-foundry/compare/v1.6.7...v1.6.8) (2026-06-04)
 
 
