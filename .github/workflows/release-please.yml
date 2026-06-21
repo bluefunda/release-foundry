@@ -42,3 +42,19 @@ jobs:
         with:
           release-type: ${{ inputs.release-type }}
           token: ${{ secrets.GH_PAT || github.token }}
+
+      - name: Auto-approve and merge release-please PR
+        if: ${{ steps.release.outputs.pr != '' }}
+        env:
+          # github.token (github-actions[bot]) approves the PR created by GH_PAT (devops-bda)
+          # — different actors, so GitHub allows the approval.
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER=$(printf '%s' '${{ steps.release.outputs.pr }}' | jq -r '.number // empty')
+          [ -z "$PR_NUMBER" ] && exit 0
+          echo "Auto-approving release-please PR #${PR_NUMBER}"
+          gh pr review "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
+            --approve --body "Auto-approved by CI — release-please version bump, no functional changes."
+          echo "Enabling auto-merge on PR #${PR_NUMBER}"
+          GH_TOKEN="${{ secrets.GH_PAT || github.token }}" \
+            gh pr merge "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --squash --auto
