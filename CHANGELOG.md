@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/bluefunda/release-foundry/compare/v1.6.10...v1.7.0) (2026-06-21)
+
+
+### Features
+
+* **release-please:** auto-approve and merge release-please PRs ([#63](https://github.com/bluefunda/release-foundry/issues/63)) ([d0ad6f5](https://github.com/bluefunda/release-foundry/commit/d0ad6f5ee356a879164c9fa77f08703df33cf517))
+
 ## [1.6.10](https://github.com/bluefunda/release-foundry/compare/v1.6.9...v1.6.10) (2026-06-08)
 
 
