@@ -49,12 +49,19 @@ jobs:
           # github.token (github-actions[bot]) approves the PR created by GH_PAT (devops-bda)
           # — different actors, so GitHub allows the approval.
           GH_TOKEN: ${{ github.token }}
+          # Pass the release-please PR JSON and merge token through the environment
+          # rather than inlining ${{ }} into the script. The PR body can contain
+          # apostrophes/parens (e.g. a commit like "don't 400 (#132)") that would
+          # otherwise break out of the shell quoting — GitHub's own guidance is to
+          # never interpolate expression values directly into run: scripts.
+          RELEASE_PR: ${{ steps.release.outputs.pr }}
+          MERGE_TOKEN: ${{ secrets.GH_PAT || github.token }}
         run: |
-          PR_NUMBER=$(printf '%s' '${{ steps.release.outputs.pr }}' | jq -r '.number // empty')
+          PR_NUMBER=$(printf '%s' "$RELEASE_PR" | jq -r '.number // empty')
           [ -z "$PR_NUMBER" ] && exit 0
           echo "Auto-approving release-please PR #${PR_NUMBER}"
           gh pr review "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
             --approve --body "Auto-approved by CI — release-please version bump, no functional changes."
           echo "Enabling auto-merge on PR #${PR_NUMBER}"
-          GH_TOKEN="${{ secrets.GH_PAT || github.token }}" \
+          GH_TOKEN="$MERGE_TOKEN" \
             gh pr merge "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --squash --auto
