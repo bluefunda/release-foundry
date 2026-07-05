@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/bluefunda/release-foundry/compare/v1.7.0...v1.7.1) (2026-07-05)
+
+
+### Bug Fixes
+
+* pass release-please PR JSON via env to avoid shell injection ([#65](https://github.com/bluefunda/release-foundry/issues/65)) ([bab0822](https://github.com/bluefunda/release-foundry/commit/bab08228c00ec8488d1f40a622ac0f755b59beee))
+
 ## [1.7.0](https://github.com/bluefunda/release-foundry/compare/v1.6.10...v1.7.0) (2026-06-21)
 
 
