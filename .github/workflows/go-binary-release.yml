@@ -85,6 +85,7 @@ jobs:
     runs-on: macos-latest
     permissions:
       contents: write
+      id-token: write # mints the OIDC token cosign uses for keyless (Sigstore/Fulcio) signing
     env:
       GOPRIVATE: ${{ inputs.goprivate }}
     steps:
@@ -106,6 +107,21 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+
+      # Installed so a repo's .goreleaser.yml can opt in to the sboms and
+      # signs pipes. Installing them is a no-op for repos whose config
+      # doesn't reference syft/cosign — GoReleaser only invokes tools its
+      # pipes name.
+      - name: Install syft (GoReleaser SBOM pipe)
+        uses: anchore/sbom-action/download-syft@v0
+
+      - name: Install cosign (GoReleaser signing pipe)
+        uses: sigstore/cosign-installer@v3
+        with:
+          # Pinned to the last v2.x release: cosign v3 dropped the classic
+          # --output-signature/--output-certificate flags GoReleaser's signs:
+          # pipe emits (replaced by a --bundle format), which breaks signing.
+          cosign-release: "v2.6.4"
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
