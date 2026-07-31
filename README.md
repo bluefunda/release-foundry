@@ -238,6 +238,9 @@ Inputs: `go-version`, `build-command`, `test-command`, `golangci-lint-version`,
 goreleaser:
   needs: release-please
   if: needs.release-please.outputs.release_created == 'true'
+  permissions:
+    contents: write # upload GoReleaser archives/checksums to the GitHub release
+    id-token: write # only needed if your .goreleaser.yml uses a signs: pipe
   uses: bluefunda/release-foundry/.github/workflows/go-binary-release.yml@main
   with:
     tag: ${{ needs.release-please.outputs.tag_name }}
@@ -247,6 +250,37 @@ goreleaser:
 ```
 
 Supports macOS code signing and notarization. See [docs/macos-notarization.md](docs/macos-notarization.md).
+
+`syft` and `cosign` (pinned to v2.6.4) are installed on the runner, so a
+consuming repo's `.goreleaser.yml` can opt in to SBOM generation and artifact
+signing without any change to this workflow:
+
+```yaml
+sboms:
+  - artifacts: archive
+
+signs:
+  - cmd: cosign
+    certificate: "${artifact}.pem"
+    args:
+      - sign-blob
+      - "--yes"
+      - "--output-signature=${signature}"
+      - "--output-certificate=${certificate}"
+      - "${artifact}"
+    artifacts: checksum
+    output: true
+```
+
+Keyless signing needs the caller's job to grant `permissions: id-token:
+write` (shown above) — without it, cosign fails to mint a Sigstore/Fulcio
+OIDC token. Repos that don't declare a `signs:`/`sboms:` pipe are unaffected;
+installing the tools is a no-op unless your config references them.
+
+**Note:** cosign is intentionally pinned to v2.6.4, not latest. Cosign v3
+replaced the classic `--output-signature`/`--output-certificate` flags
+GoReleaser's `signs:` pipe emits with a new `--bundle` format, which breaks
+signing under v3.
 
 ### `release-please.yml` — Automated versioning and CHANGELOG
 
