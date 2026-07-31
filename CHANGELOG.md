@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/bluefunda/release-foundry/compare/v1.7.1...v1.8.0) (2026-07-31)
+
+
+### Features
+
+* **go-binary-release:** install syft + cosign for SBOM/signing pipes ([#68](https://github.com/bluefunda/release-foundry/issues/68)) ([103f3fd](https://github.com/bluefunda/release-foundry/commit/103f3fd478cd920a2ddb356dfb98b32b727414ba))
+
 ## [1.7.1](https://github.com/bluefunda/release-foundry/compare/v1.7.0...v1.7.1) (2026-07-05)
 
 
