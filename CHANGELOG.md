@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/bluefunda/release-foundry/compare/v1.8.0...v1.8.1) (2026-08-06)
+
+
+### Bug Fixes
+
+* **ci:** install git on self-hosted runners when goprivate is set ([56f08b0](https://github.com/bluefunda/release-foundry/commit/56f08b09f576c7c880f19a18377f8c325f8bfae8))
+
 ## [1.8.0](https://github.com/bluefunda/release-foundry/compare/v1.7.1...v1.8.0) (2026-07-31)
 
 
