@@ -62,7 +62,6 @@ jobs:
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          command -v git >/dev/null 2>&1 || (sudo apt-get update -q && sudo apt-get install -y git)
           if [ -n "$GH_PAT" ]; then
             echo "GIT_CONFIG_COUNT=1" >> "$GITHUB_ENV"
             echo "GIT_CONFIG_KEY_0=url.https://${GH_PAT}@github.com/.insteadOf" >> "$GITHUB_ENV"
@@ -110,7 +109,6 @@ jobs:
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          command -v git >/dev/null 2>&1 || (sudo apt-get update -q && sudo apt-get install -y git)
           if [ -n "$GH_PAT" ]; then
             echo "GIT_CONFIG_COUNT=1" >> "$GITHUB_ENV"
             echo "GIT_CONFIG_KEY_0=url.https://${GH_PAT}@github.com/.insteadOf" >> "$GITHUB_ENV"
@@ -152,7 +150,6 @@ jobs:
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          command -v git >/dev/null 2>&1 || (sudo apt-get update -q && sudo apt-get install -y git)
           if [ -n "$GH_PAT" ]; then
             echo "GIT_CONFIG_COUNT=1" >> "$GITHUB_ENV"
             echo "GIT_CONFIG_KEY_0=url.https://${GH_PAT}@github.com/.insteadOf" >> "$GITHUB_ENV"
