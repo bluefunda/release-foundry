@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.4](https://github.com/bluefunda/release-foundry/compare/v1.8.3...v1.8.4) (2026-09-16)
+
+
+### Bug Fixes
+
+* **go-ci:** isolate the protoc download per job to stop a shared-tmp race ([#79](https://github.com/bluefunda/release-foundry/issues/79)) ([ed774ac](https://github.com/bluefunda/release-foundry/commit/ed774ac1c1ebac8ddc8814e5d81055dce978ce20))
+
 ## [1.8.3](https://github.com/bluefunda/release-foundry/compare/v1.8.2...v1.8.3) (2026-09-16)
 
 
