@@ -96,7 +96,18 @@ jobs:
             curl -fsSL -o /tmp/protoc.zip \
               "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
             mkdir -p "$HOME/.local"
-            unzip -oq /tmp/protoc.zip -d "$HOME/.local"
+            # Self-hosted runners may have neither unzip nor python3-zipfile;
+            # try both before giving up, since protoc ships only as a .zip.
+            if command -v unzip >/dev/null 2>&1; then
+              unzip -oq /tmp/protoc.zip -d "$HOME/.local"
+            elif command -v python3 >/dev/null 2>&1; then
+              python3 -m zipfile -e /tmp/protoc.zip "$HOME/.local"
+              # python3 -m zipfile does not preserve the executable bit.
+              chmod +x "$HOME/.local/bin/protoc"
+            else
+              echo "need unzip or python3 to extract protoc" >&2
+              exit 1
+            fi
             rm -f /tmp/protoc.zip
             echo "$HOME/.local/bin" >> "$GITHUB_PATH"
             "$HOME/.local/bin/protoc" --version
@@ -164,7 +175,18 @@ jobs:
             curl -fsSL -o /tmp/protoc.zip \
               "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
             mkdir -p "$HOME/.local"
-            unzip -oq /tmp/protoc.zip -d "$HOME/.local"
+            # Self-hosted runners may have neither unzip nor python3-zipfile;
+            # try both before giving up, since protoc ships only as a .zip.
+            if command -v unzip >/dev/null 2>&1; then
+              unzip -oq /tmp/protoc.zip -d "$HOME/.local"
+            elif command -v python3 >/dev/null 2>&1; then
+              python3 -m zipfile -e /tmp/protoc.zip "$HOME/.local"
+              # python3 -m zipfile does not preserve the executable bit.
+              chmod +x "$HOME/.local/bin/protoc"
+            else
+              echo "need unzip or python3 to extract protoc" >&2
+              exit 1
+            fi
             rm -f /tmp/protoc.zip
             echo "$HOME/.local/bin" >> "$GITHUB_PATH"
             "$HOME/.local/bin/protoc" --version
@@ -226,7 +248,18 @@ jobs:
             curl -fsSL -o /tmp/protoc.zip \
               "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
             mkdir -p "$HOME/.local"
-            unzip -oq /tmp/protoc.zip -d "$HOME/.local"
+            # Self-hosted runners may have neither unzip nor python3-zipfile;
+            # try both before giving up, since protoc ships only as a .zip.
+            if command -v unzip >/dev/null 2>&1; then
+              unzip -oq /tmp/protoc.zip -d "$HOME/.local"
+            elif command -v python3 >/dev/null 2>&1; then
+              python3 -m zipfile -e /tmp/protoc.zip "$HOME/.local"
+              # python3 -m zipfile does not preserve the executable bit.
+              chmod +x "$HOME/.local/bin/protoc"
+            else
+              echo "need unzip or python3 to extract protoc" >&2
+              exit 1
+            fi
             rm -f /tmp/protoc.zip
             echo "$HOME/.local/bin" >> "$GITHUB_PATH"
             "$HOME/.local/bin/protoc" --version
