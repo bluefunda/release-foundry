@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.2](https://github.com/bluefunda/release-foundry/compare/v1.8.1...v1.8.2) (2026-09-16)
+
+
+### Bug Fixes
+
+* **go-ci:** install protoc without sudo so run-protobuf works on self-hosted runners ([#75](https://github.com/bluefunda/release-foundry/issues/75)) ([d7b3bac](https://github.com/bluefunda/release-foundry/commit/d7b3bac9058aecf9d5f6c45bb1bc657ecb75a0b2))
+
 ## [1.8.1](https://github.com/bluefunda/release-foundry/compare/v1.8.0...v1.8.1) (2026-08-06)
 
 
