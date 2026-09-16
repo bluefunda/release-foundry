@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.3](https://github.com/bluefunda/release-foundry/compare/v1.8.2...v1.8.3) (2026-09-16)
+
+
+### Bug Fixes
+
+* **go-ci:** extract protoc without unzip ([#77](https://github.com/bluefunda/release-foundry/issues/77)) ([adc41a0](https://github.com/bluefunda/release-foundry/commit/adc41a0e9d41d8c2c2117ea984e7d072f1b32c74))
+
 ## [1.8.2](https://github.com/bluefunda/release-foundry/compare/v1.8.1...v1.8.2) (2026-09-16)
 
 
