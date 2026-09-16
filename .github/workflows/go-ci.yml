@@ -36,6 +36,11 @@ on:
         required: false
         type: boolean
         default: false
+      protoc-version:
+        description: 'protoc release to install when run-protobuf is set.'
+        required: false
+        type: string
+        default: '29.3'
       runner:
         description: 'Runner label. Defaults to ubuntu-latest (GitHub-hosted). Pass self-hosted for private repos.'
         required: false
@@ -76,10 +81,31 @@ jobs:
 
       - name: Install protoc tools
         if: inputs.run-protobuf
+        env:
+          PROTOC_VERSION: ${{ inputs.protoc-version }}
         run: |
-          sudo apt-get update -q && sudo apt-get install -y protobuf-compiler
+          # Install protoc without sudo. Self-hosted runners generally have no
+          # passwordless sudo, so `apt-get install protobuf-compiler` fails and
+          # leaves `make proto` to die with "protoc: command not found" — while
+          # the two go install lines below succeed, which makes the cause
+          # non-obvious. Downloading the release archive works on both
+          # GitHub-hosted and self-hosted runners.
+          if command -v protoc >/dev/null 2>&1; then
+            echo "protoc already present: $(protoc --version)"
+          else
+            curl -fsSL -o /tmp/protoc.zip \
+              "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
+            mkdir -p "$HOME/.local"
+            unzip -oq /tmp/protoc.zip -d "$HOME/.local"
+            rm -f /tmp/protoc.zip
+            echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+            "$HOME/.local/bin/protoc" --version
+          fi
           go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+          # protoc resolves its plugins from PATH; GOPATH/bin is not always on
+          # it for a self-hosted runner.
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
       - name: Generate proto files
         if: inputs.run-protobuf
@@ -123,10 +149,31 @@ jobs:
 
       - name: Install protoc tools
         if: inputs.run-protobuf
+        env:
+          PROTOC_VERSION: ${{ inputs.protoc-version }}
         run: |
-          sudo apt-get update -q && sudo apt-get install -y protobuf-compiler
+          # Install protoc without sudo. Self-hosted runners generally have no
+          # passwordless sudo, so `apt-get install protobuf-compiler` fails and
+          # leaves `make proto` to die with "protoc: command not found" — while
+          # the two go install lines below succeed, which makes the cause
+          # non-obvious. Downloading the release archive works on both
+          # GitHub-hosted and self-hosted runners.
+          if command -v protoc >/dev/null 2>&1; then
+            echo "protoc already present: $(protoc --version)"
+          else
+            curl -fsSL -o /tmp/protoc.zip \
+              "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
+            mkdir -p "$HOME/.local"
+            unzip -oq /tmp/protoc.zip -d "$HOME/.local"
+            rm -f /tmp/protoc.zip
+            echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+            "$HOME/.local/bin/protoc" --version
+          fi
           go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+          # protoc resolves its plugins from PATH; GOPATH/bin is not always on
+          # it for a self-hosted runner.
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
       - name: Generate proto files
         if: inputs.run-protobuf
@@ -164,10 +211,31 @@ jobs:
 
       - name: Install protoc tools
         if: inputs.run-protobuf
+        env:
+          PROTOC_VERSION: ${{ inputs.protoc-version }}
         run: |
-          sudo apt-get update -q && sudo apt-get install -y protobuf-compiler
+          # Install protoc without sudo. Self-hosted runners generally have no
+          # passwordless sudo, so `apt-get install protobuf-compiler` fails and
+          # leaves `make proto` to die with "protoc: command not found" — while
+          # the two go install lines below succeed, which makes the cause
+          # non-obvious. Downloading the release archive works on both
+          # GitHub-hosted and self-hosted runners.
+          if command -v protoc >/dev/null 2>&1; then
+            echo "protoc already present: $(protoc --version)"
+          else
+            curl -fsSL -o /tmp/protoc.zip \
+              "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
+            mkdir -p "$HOME/.local"
+            unzip -oq /tmp/protoc.zip -d "$HOME/.local"
+            rm -f /tmp/protoc.zip
+            echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+            "$HOME/.local/bin/protoc" --version
+          fi
           go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+          # protoc resolves its plugins from PATH; GOPATH/bin is not always on
+          # it for a self-hosted runner.
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
       - name: Generate proto files
         if: inputs.run-protobuf
