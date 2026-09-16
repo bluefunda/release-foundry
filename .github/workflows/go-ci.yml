@@ -93,24 +93,37 @@ jobs:
           if command -v protoc >/dev/null 2>&1; then
             echo "protoc already present: $(protoc --version)"
           else
-            curl -fsSL -o /tmp/protoc.zip \
+            # Everything lands under RUNNER_TEMP, which is per-job. The three
+            # jobs run concurrently, and on self-hosted runners they share a
+            # machine — so a fixed path like /tmp/protoc.zip races: one job
+            # overwrites the archive while another is extracting it, or deletes
+            # it mid-read, surfacing as "BadZipFile: File is not a zip file".
+            PROTOC_ZIP="$RUNNER_TEMP/protoc-${PROTOC_VERSION}.zip"
+            PROTOC_DIR="$RUNNER_TEMP/protoc-${PROTOC_VERSION}"
+            curl -fsSL -o "$PROTOC_ZIP" \
               "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
-            mkdir -p "$HOME/.local"
+            # A truncated or error-page download extracts confusingly; check first.
+            if ! head -c2 "$PROTOC_ZIP" | grep -q PK; then
+              echo "downloaded protoc archive is not a zip:" >&2
+              head -c200 "$PROTOC_ZIP" >&2
+              exit 1
+            fi
+            mkdir -p "$PROTOC_DIR"
             # Self-hosted runners may have neither unzip nor python3-zipfile;
             # try both before giving up, since protoc ships only as a .zip.
             if command -v unzip >/dev/null 2>&1; then
-              unzip -oq /tmp/protoc.zip -d "$HOME/.local"
+              unzip -oq "$PROTOC_ZIP" -d "$PROTOC_DIR"
             elif command -v python3 >/dev/null 2>&1; then
-              python3 -m zipfile -e /tmp/protoc.zip "$HOME/.local"
+              python3 -m zipfile -e "$PROTOC_ZIP" "$PROTOC_DIR"
               # python3 -m zipfile does not preserve the executable bit.
-              chmod +x "$HOME/.local/bin/protoc"
+              chmod +x "$PROTOC_DIR/bin/protoc"
             else
               echo "need unzip or python3 to extract protoc" >&2
               exit 1
             fi
-            rm -f /tmp/protoc.zip
-            echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-            "$HOME/.local/bin/protoc" --version
+            rm -f "$PROTOC_ZIP"
+            echo "$PROTOC_DIR/bin" >> "$GITHUB_PATH"
+            "$PROTOC_DIR/bin/protoc" --version
           fi
           go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
@@ -172,24 +185,37 @@ jobs:
           if command -v protoc >/dev/null 2>&1; then
             echo "protoc already present: $(protoc --version)"
           else
-            curl -fsSL -o /tmp/protoc.zip \
+            # Everything lands under RUNNER_TEMP, which is per-job. The three
+            # jobs run concurrently, and on self-hosted runners they share a
+            # machine — so a fixed path like /tmp/protoc.zip races: one job
+            # overwrites the archive while another is extracting it, or deletes
+            # it mid-read, surfacing as "BadZipFile: File is not a zip file".
+            PROTOC_ZIP="$RUNNER_TEMP/protoc-${PROTOC_VERSION}.zip"
+            PROTOC_DIR="$RUNNER_TEMP/protoc-${PROTOC_VERSION}"
+            curl -fsSL -o "$PROTOC_ZIP" \
               "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
-            mkdir -p "$HOME/.local"
+            # A truncated or error-page download extracts confusingly; check first.
+            if ! head -c2 "$PROTOC_ZIP" | grep -q PK; then
+              echo "downloaded protoc archive is not a zip:" >&2
+              head -c200 "$PROTOC_ZIP" >&2
+              exit 1
+            fi
+            mkdir -p "$PROTOC_DIR"
             # Self-hosted runners may have neither unzip nor python3-zipfile;
             # try both before giving up, since protoc ships only as a .zip.
             if command -v unzip >/dev/null 2>&1; then
-              unzip -oq /tmp/protoc.zip -d "$HOME/.local"
+              unzip -oq "$PROTOC_ZIP" -d "$PROTOC_DIR"
             elif command -v python3 >/dev/null 2>&1; then
-              python3 -m zipfile -e /tmp/protoc.zip "$HOME/.local"
+              python3 -m zipfile -e "$PROTOC_ZIP" "$PROTOC_DIR"
               # python3 -m zipfile does not preserve the executable bit.
-              chmod +x "$HOME/.local/bin/protoc"
+              chmod +x "$PROTOC_DIR/bin/protoc"
             else
               echo "need unzip or python3 to extract protoc" >&2
               exit 1
             fi
-            rm -f /tmp/protoc.zip
-            echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-            "$HOME/.local/bin/protoc" --version
+            rm -f "$PROTOC_ZIP"
+            echo "$PROTOC_DIR/bin" >> "$GITHUB_PATH"
+            "$PROTOC_DIR/bin/protoc" --version
           fi
           go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
@@ -245,24 +271,37 @@ jobs:
           if command -v protoc >/dev/null 2>&1; then
             echo "protoc already present: $(protoc --version)"
           else
-            curl -fsSL -o /tmp/protoc.zip \
+            # Everything lands under RUNNER_TEMP, which is per-job. The three
+            # jobs run concurrently, and on self-hosted runners they share a
+            # machine — so a fixed path like /tmp/protoc.zip races: one job
+            # overwrites the archive while another is extracting it, or deletes
+            # it mid-read, surfacing as "BadZipFile: File is not a zip file".
+            PROTOC_ZIP="$RUNNER_TEMP/protoc-${PROTOC_VERSION}.zip"
+            PROTOC_DIR="$RUNNER_TEMP/protoc-${PROTOC_VERSION}"
+            curl -fsSL -o "$PROTOC_ZIP" \
               "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
-            mkdir -p "$HOME/.local"
+            # A truncated or error-page download extracts confusingly; check first.
+            if ! head -c2 "$PROTOC_ZIP" | grep -q PK; then
+              echo "downloaded protoc archive is not a zip:" >&2
+              head -c200 "$PROTOC_ZIP" >&2
+              exit 1
+            fi
+            mkdir -p "$PROTOC_DIR"
             # Self-hosted runners may have neither unzip nor python3-zipfile;
             # try both before giving up, since protoc ships only as a .zip.
             if command -v unzip >/dev/null 2>&1; then
-              unzip -oq /tmp/protoc.zip -d "$HOME/.local"
+              unzip -oq "$PROTOC_ZIP" -d "$PROTOC_DIR"
             elif command -v python3 >/dev/null 2>&1; then
-              python3 -m zipfile -e /tmp/protoc.zip "$HOME/.local"
+              python3 -m zipfile -e "$PROTOC_ZIP" "$PROTOC_DIR"
               # python3 -m zipfile does not preserve the executable bit.
-              chmod +x "$HOME/.local/bin/protoc"
+              chmod +x "$PROTOC_DIR/bin/protoc"
             else
               echo "need unzip or python3 to extract protoc" >&2
               exit 1
             fi
-            rm -f /tmp/protoc.zip
-            echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-            "$HOME/.local/bin/protoc" --version
+            rm -f "$PROTOC_ZIP"
+            echo "$PROTOC_DIR/bin" >> "$GITHUB_PATH"
+            "$PROTOC_DIR/bin/protoc" --version
           fi
           go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
