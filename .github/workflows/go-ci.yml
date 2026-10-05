@@ -143,6 +143,18 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           files: ./coverage.txt
+          # Self-hosted runners now force Node 20 actions onto Node 24 (see the
+          # "Node.js 20 is deprecated... forced to run on Node.js 24" warning in
+          # job logs), and Node 24's stricter default OpenSSL/TLS behavior is
+          # causing this upload to fail its TLS handshake against codecov's
+          # endpoint ("SSL alert number 40: handshake failure") — a runner-
+          # level regression, not a problem with the coverage data or the repo
+          # calling this workflow. fail_ci_if_error keeps coverage upload
+          # best-effort (consistent with it already being tokenless/optional
+          # org-wide) so a codecov outage or this handshake issue never fails
+          # CI for every consumer of this reusable workflow. Does not fix the
+          # underlying upload — tracked separately.
+          fail_ci_if_error: false
 
   build:
     name: Build
