@@ -69,7 +69,7 @@ jobs:
         run: |
           if [ -n "$GH_PAT" ]; then
             echo "GIT_CONFIG_COUNT=1" >> "$GITHUB_ENV"
-            echo "GIT_CONFIG_KEY_0=url.https://${GH_PAT}@github.com/.insteadOf" >> "$GITHUB_ENV"
+            echo "GIT_CONFIG_KEY_0=url.https://x-access-token:${GH_PAT}@github.com/.insteadOf" >> "$GITHUB_ENV"
             echo "GIT_CONFIG_VALUE_0=https://github.com/" >> "$GITHUB_ENV"
           fi
 
@@ -161,7 +161,7 @@ jobs:
         run: |
           if [ -n "$GH_PAT" ]; then
             echo "GIT_CONFIG_COUNT=1" >> "$GITHUB_ENV"
-            echo "GIT_CONFIG_KEY_0=url.https://${GH_PAT}@github.com/.insteadOf" >> "$GITHUB_ENV"
+            echo "GIT_CONFIG_KEY_0=url.https://x-access-token:${GH_PAT}@github.com/.insteadOf" >> "$GITHUB_ENV"
             echo "GIT_CONFIG_VALUE_0=https://github.com/" >> "$GITHUB_ENV"
           fi
 
@@ -247,7 +247,7 @@ jobs:
         run: |
           if [ -n "$GH_PAT" ]; then
             echo "GIT_CONFIG_COUNT=1" >> "$GITHUB_ENV"
-            echo "GIT_CONFIG_KEY_0=url.https://${GH_PAT}@github.com/.insteadOf" >> "$GITHUB_ENV"
+            echo "GIT_CONFIG_KEY_0=url.https://x-access-token:${GH_PAT}@github.com/.insteadOf" >> "$GITHUB_ENV"
             echo "GIT_CONFIG_VALUE_0=https://github.com/" >> "$GITHUB_ENV"
           fi
 
