@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.5](https://github.com/bluefunda/release-foundry/compare/v1.8.4...v1.8.5) (2026-11-03)
+
+
+### Bug Fixes
+
+* **go-ci:** pass the token as a password when fetching private Go modules ([#84](https://github.com/bluefunda/release-foundry/issues/84)) ([6d770e9](https://github.com/bluefunda/release-foundry/commit/6d770e9dafdc43f07878cb7dc119c636d025d881))
+
 ## [1.8.4](https://github.com/bluefunda/release-foundry/compare/v1.8.3...v1.8.4) (2026-09-16)
 
 
