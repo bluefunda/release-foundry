@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.8](https://github.com/bluefunda/release-foundry/compare/v1.8.7...v1.8.8) (2026-11-10)
+
+
+### Performance Improvements
+
+* **go-ci:** skip the setup-go cache on self-hosted runners ([#90](https://github.com/bluefunda/release-foundry/issues/90)) ([c4111c2](https://github.com/bluefunda/release-foundry/commit/c4111c265ffd6153f3a4a58b3cdc5eab4596a5d5))
+
 ## [1.8.7](https://github.com/bluefunda/release-foundry/compare/v1.8.6...v1.8.7) (2026-11-10)
 
 
