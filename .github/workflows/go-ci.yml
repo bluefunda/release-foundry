@@ -77,7 +77,7 @@ jobs:
         with:
           go-version: ${{ inputs.go-version || '' }}
           go-version-file: ${{ inputs.go-version == '' && 'go.mod' || '' }}
-          cache: true
+          cache: ${{ inputs.runner == 'ubuntu-latest' }}
 
       - name: Install protoc tools
         if: inputs.run-protobuf
@@ -181,7 +181,7 @@ jobs:
         with:
           go-version: ${{ inputs.go-version || '' }}
           go-version-file: ${{ inputs.go-version == '' && 'go.mod' || '' }}
-          cache: true
+          cache: ${{ inputs.runner == 'ubuntu-latest' }}
 
       - name: Install protoc tools
         if: inputs.run-protobuf
@@ -267,7 +267,7 @@ jobs:
         with:
           go-version: ${{ inputs.go-version || '' }}
           go-version-file: ${{ inputs.go-version == '' && 'go.mod' || '' }}
-          cache: true
+          cache: ${{ inputs.runner == 'ubuntu-latest' }}
 
       - name: Install protoc tools
         if: inputs.run-protobuf
