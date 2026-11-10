@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.7](https://github.com/bluefunda/release-foundry/compare/v1.8.6...v1.8.7) (2026-11-10)
+
+
+### Bug Fixes
+
+* **go-ci:** stop codecov upload failures from failing the build ([#82](https://github.com/bluefunda/release-foundry/issues/82)) ([3afd40e](https://github.com/bluefunda/release-foundry/commit/3afd40e73c010c858fe589e608b8622d992547ab))
+
 ## [1.8.6](https://github.com/bluefunda/release-foundry/compare/v1.8.5...v1.8.6) (2026-11-10)
 
 
