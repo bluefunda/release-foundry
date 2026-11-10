@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.6](https://github.com/bluefunda/release-foundry/compare/v1.8.5...v1.8.6) (2026-11-10)
+
+
+### Bug Fixes
+
+* **docker-deploy:** add context and file inputs ([#86](https://github.com/bluefunda/release-foundry/issues/86)) ([270fe20](https://github.com/bluefunda/release-foundry/commit/270fe2024a5139ccbf9694d122079096fd218f3a))
+
 ## [1.8.5](https://github.com/bluefunda/release-foundry/compare/v1.8.4...v1.8.5) (2026-11-03)
 
 
