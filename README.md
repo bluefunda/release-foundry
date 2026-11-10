@@ -323,7 +323,21 @@ deploy:
     GH_PAT: ${{ secrets.GH_PAT }}   # only needed for private Go module dependencies
 ```
 
-Inputs: `tag` (required), `image-name` (defaults to repo name), `build-args`, `runner`.
+Inputs: `tag` (required), `image-name` (defaults to repo name), `build-args`,
+`context` (defaults to `.`), `file` (defaults to `<context>/Dockerfile`),
+`platforms`, `runner`.
+
+A repo that ships more than one image calls the workflow once per image with
+its own `image-name` and `file`:
+
+```yaml
+docker-abaper:
+  uses: bluefunda/release-foundry/.github/workflows/docker-deploy.yml@main
+  with:
+    tag: ${{ needs.release.outputs.tag_name }}
+    image-name: abaper
+    file: abaper/Dockerfile
+```
 
 ### `pr-title-check.yml` — Conventional Commits enforcement
 

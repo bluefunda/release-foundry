@@ -20,6 +20,16 @@ on:
         required: false
         type: string
         default: ''
+      context:
+        description: 'Docker build context (defaults to the repo root)'
+        required: false
+        type: string
+        default: '.'
+      file:
+        description: 'Path to the Dockerfile (defaults to <context>/Dockerfile). Use for repos that build more than one image.'
+        required: false
+        type: string
+        default: ''
       platforms:
         description: 'Docker build platforms (comma-separated). Defaults to linux/amd64. Pass linux/amd64,linux/arm64 for multi-arch (requires a privileged runner with QEMU support).'
         required: false
@@ -43,6 +53,16 @@ on:
         default: ''
       build-args:
         description: 'Additional Docker build arguments (one per line)'
+        required: false
+        type: string
+        default: ''
+      context:
+        description: 'Docker build context (defaults to the repo root)'
+        required: false
+        type: string
+        default: '.'
+      file:
+        description: 'Path to the Dockerfile (defaults to <context>/Dockerfile). Use for repos that build more than one image.'
         required: false
         type: string
         default: ''
@@ -130,7 +150,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ${{ inputs.context }}
+          file: ${{ inputs.file || format('{0}/Dockerfile', inputs.context) }}
           push: true
           platforms: ${{ inputs.platforms }}
           build-args: ${{ steps.build-args.outputs.value }}
