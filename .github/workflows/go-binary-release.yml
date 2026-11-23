@@ -55,7 +55,7 @@ on:
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event.repository.private && 'self-hosted' || 'ubuntu-latest' }}
     env:
       GOPRIVATE: ${{ inputs.goprivate }}
     steps:
