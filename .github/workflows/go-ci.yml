@@ -42,10 +42,10 @@ on:
         type: string
         default: '29.3'
       runner:
-        description: 'Runner label. Defaults to ubuntu-latest (GitHub-hosted). Pass self-hosted for private repos.'
+        description: 'Runner label. Empty (default) picks by repository visibility: self-hosted for private repos, ubuntu-latest (GitHub-hosted) for public ones.'
         required: false
         type: string
-        default: 'ubuntu-latest'
+        default: ''
     secrets:
       GH_PAT:
         description: 'GitHub PAT for private module access. Required when goprivate is set.'
@@ -54,7 +54,7 @@ on:
 jobs:
   test:
     name: Test
-    runs-on: ${{ inputs.runner }}
+    runs-on: ${{ inputs.runner || (github.event.repository.private && 'self-hosted') || 'ubuntu-latest' }}
     env:
       GOPRIVATE: ${{ inputs.goprivate }}
     steps:
@@ -158,7 +158,7 @@ jobs:
 
   build:
     name: Build
-    runs-on: ${{ inputs.runner }}
+    runs-on: ${{ inputs.runner || (github.event.repository.private && 'self-hosted') || 'ubuntu-latest' }}
     env:
       GOPRIVATE: ${{ inputs.goprivate }}
     steps:
@@ -244,7 +244,7 @@ jobs:
 
   lint:
     name: Lint
-    runs-on: ${{ inputs.runner }}
+    runs-on: ${{ inputs.runner || (github.event.repository.private && 'self-hosted') || 'ubuntu-latest' }}
     env:
       GOPRIVATE: ${{ inputs.goprivate }}
     steps:
